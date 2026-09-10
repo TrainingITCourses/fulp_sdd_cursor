@@ -1,0 +1,1 @@
+Listado de puestos vacantes en una empresa (alta y listado)
