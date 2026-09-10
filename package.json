@@ -1,0 +1,18 @@
+{
+  "name": "fulp-sdd-vacantes",
+  "version": "1.0.0",
+  "description": "Listado de puestos vacantes en una empresa (alta y listado)",
+  "main": "vacantes.js",
+  "bin": {
+    "vacantes": "./vacantes.js"
+  },
+  "scripts": {
+    "alta": "node vacantes.js alta",
+    "listado": "node vacantes.js listado",
+    "start": "node vacantes.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "ISC"
+}
