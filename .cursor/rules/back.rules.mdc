@@ -1,0 +1,14 @@
+---
+globs: back/**/*.*
+alwaysApply: false
+---
+
+Programado en capas, agrupado por funcionalidades
+los fichero se llaman funcionalidad.artefacto.extension
+por ejemplo:
+- auth.controller.ts
+- auth.service.ts
+
+npm start para iniciar el servidor
+npm run dev para iniciar el servidor en modo desarrollo
+npm run test para ejecutar las pruebas
