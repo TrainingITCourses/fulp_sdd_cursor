@@ -1,23 +1,34 @@
-**Instrucciones:**
-tono: directo, sencillo, claro
-dudas: preguntame cualquier duda que tengas. ofrece opciones y haz preguntas de una en una.
+# Instrucciones del proyecto
 
-**Git:**
-{conventional commits, rama principal, patrón de nombres de ramas}
+## Entorno
 
-# Problema:
-[una o pocas frases]
+- **Git**: {URL remota | ruta local} — {rama por defecto `main` | `master`}
+- **SO** `{Windows | Linux | MacOS}` — **Shell** `{cmd | PowerShell | bash | zsh | git bash}`
+- **Tiempo** {usar ISO 8601 para marcas de tiempo DateTime}
 
-# Solución:
-{visión: N proyectos}
+## Rutas
 
-## [nombre carpeta]:
-{qué es, stack}
+- **{Agents_File}** — `AGENTS.md` — este archivo
+- **{Agents_Folder}** — `.agents/` — habilidades, reglas y hooks del agente
+- **{Product_Folder}** — `.product/` | `docs/` | {elegido} — especificaciones y arquitectura
+- **{Source_Folder}** — `src/` — código fuente
 
-# Verificación:
+## Producto
 
-{cómo comprobar que la solución funciona}
+### Problema
+
+{Lo que resuelve el producto.}
+
+### Solución
+
+{Descripción general de la aplicación y su responsabilidad principal.}
+
+- **Ruta fuente**: `src/`
+- **Reglas específicas**: {.cursor/rules/project.rules.mdc}
+
+### Verificación
+
+{Comprobaciones del proyecto y evidencia esperada.}
 
 ```bash
-[comando de aceptación, normalmente e2e]
-```
+# comandos de instalación, compilación y pruebas

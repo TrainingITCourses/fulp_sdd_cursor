@@ -1,0 +1,47 @@
+---
+description: Restricciones para el proyecto {project} de {Product_Name}
+glob: "{source_glob}"
+---
+# Reglas de {Folder_Name} — {Product_Name}
+
+## Problema
+
+{Por qué existe esta carpeta y su límite.}
+
+## Solución
+
+- **Código fuente**: `{source_root}/`
+- **Lenguaje**: {lenguaje}
+- **Framework**: {framework}
+- **Pruebas**: {estrategia de pruebas}
+
+### Dependencias
+
+- **Depende de**: {proyectos hermanos / sistemas externos de los que depende}
+- **Usado por**: {proyectos hermanos / sistemas externos que dependen de él}
+- **Librerías**: {librerías principales que utiliza este proyecto}
+
+### Organización del código
+
+**Patrón**: {Basado en capas | Basado en funcionalidades | Híbrido}.
+
+```text
+{source_root}/
+├── {carpeta_o_archivo}    # {responsabilidad en una línea}
+└── {carpeta_o_archivo}    # {responsabilidad en una línea}
+```
+
+## Código fuente
+
+Ficheros: {regla de nomenclatura de ficheros}
+Clases: {regla de nomenclatura de clases}
+Funciones: {regla de nomenclatura de funciones}
+Constants: {regla de nomenclatura de constants}
+Variables: {regla de nomenclatura de variables}
+Tests: {regla de nomenclatura de tests}
+
+### Ejemplo canónico de código
+
+```{lenguaje}
+{ejemplo canónico de código}
+```
