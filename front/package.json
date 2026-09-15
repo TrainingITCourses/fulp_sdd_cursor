@@ -1,0 +1,37 @@
+{
+  "name": "front-standard",
+  "version": "1.0.0",
+  "description": "Standard web client — framework-free HTML/CSS/TS.",
+  "author": {
+    "name": "Alberto Basalo",
+    "email": "albertobasalo@aicode.academy",
+    "url": "https://aicode.academy"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch server.ts",
+    "start": "bun server.ts",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:coverage": "bun test --coverage",
+    "lint": "oxlint --fix --format=agent --quiet",
+    "lint:warnings": "oxlint --deny-warnings --format=agent ",
+    "lint:complexity": "oxlint --quiet -D complexity --format=agent"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.2",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.5.1",
+    "oxlint": "^1.83.0",
+    "oxlint-tsgolint": "^7.0.2001",
+    "typescript": "^7.0.2"
+  },
+  "packageManager": "bun@1.4.0",
+  "engines": {
+    "node": ">=26.0.0",
+    "bun": ">=1.4.0"
+  }
+}

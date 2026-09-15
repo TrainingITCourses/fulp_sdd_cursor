@@ -1,0 +1,35 @@
+/* Self-hosted fonts (latin subset) — replaces the Google Fonts CDN.
+   Roboto ships as a single variable-weight file covering 400–800. */
+
+@font-face {
+  font-family: "Roboto";
+  font-style: normal;
+  font-weight: 400 800;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("fonts/roboto-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Audiowide";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/audiowide-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Anonymous Pro";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/anonymous-pro-latin-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Anonymous Pro";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("fonts/anonymous-pro-latin-700.woff2") format("woff2");
+}
