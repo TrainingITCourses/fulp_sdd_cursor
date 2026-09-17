@@ -15,6 +15,12 @@ export const routes: Route[] = [
     title: `About — ${appTitle}`,
   },
   {
+    load: () => import("./register-page.component.js").then((m) => m.tagName),
+    menu: { href: "/register", label: "Register" },
+    pattern: new URLPattern({ pathname: "/register" }),
+    title: `Register — ${appTitle}`,
+  },
+  {
     load: () => import("./item-detail-page.component.js").then((m) => m.tagName),
     pattern: new URLPattern({ pathname: "/items/:itemId" }),
     title: "Item — Details",
