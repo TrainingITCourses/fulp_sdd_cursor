@@ -1,14 +1,63 @@
 ---
+description: Restricciones para el proyecto back de Astro-Bookings
 globs: back/**/*.*
 alwaysApply: false
 ---
+# Reglas de back — Astro-Bookings
 
-Programado en capas, agrupado por funcionalidades
-los fichero se llaman funcionalidad.artefacto.extension
-por ejemplo:
-- auth.controller.ts
-- auth.service.ts
+## Problema
 
-npm start para iniciar el servidor
-npm run dev para iniciar el servidor en modo desarrollo
-npm run test para ejecutar las pruebas
+API REST de Astro-Bookings: reservas de plazas en viajes espaciales. Esta carpeta es el servidor HTTP; no incluye el cliente web ni e2e.
+
+## Solución
+
+- **Código fuente**: `back/`
+- **Lenguaje**: TypeScript (ESM, `type: module`, imports con extensión `.js`)
+- **Framework**: Express 5, runtime Bun (`bun server.ts`)
+- **Pruebas**: `bun test`. Health usa `node:test` + `node:assert`. `shared/` usa `bun:test`. Tests colocalizados `*.test.ts`. Cobertura umbral 0.80 (`bunfig.toml`).
+
+Arranque: `bun start` / `bun dev` (`--watch`). Lint `oxlint`, format `oxfmt`. Puerto `PORT` (defecto 3000). SQLite `DB_PATH` (defecto `./data/demo.db`). Endpoint: `GET /api/health`.
+
+### Dependencias
+
+- **Depende de**: entorno (`PORT`, `DB_PATH`), SQLite en fichero (`node:sqlite`)
+- **Usado por**: `front/` (`API_BASE_URL`), `e2e/`
+- **Librerías**: `express`, `cors`; tipos `@types/express`, `@types/cors`, `@types/bun`
+
+### Organización del código
+
+**Patrón**: Híbrido. Infra en `server/`; API agrupada por funcionalidad; utilidades en `shared/`.
+
+```text
+back/
+├── server.ts                 # app Express, cors, json, /api, errorHandler, listen
+├── api/api.ts                # apiRouter; registra GET /health
+├── api/health/               # health: controller, service, repository, types
+├── server/config.ts          # PORT, DB_PATH
+├── server/db.ts              # DatabaseSync cacheada
+├── server/errors.ts          # ApiError + errorHandler
+├── server/listener.ts        # listen y conflicto de puerto
+└── shared/type.utils.ts      # parseo/coerción numérica
+```
+
+## Código fuente
+
+Ficheros: por funcionalidad `funcionalidad.artefacto.ts` (`health.controller.ts`, `health.service.ts`, `health.repository.ts`, `health.types.ts`). Infra y arranque: nombre del rol (`server.ts`, `config.ts`, `db.ts`).
+Clases: PascalCase (`ApiError`).
+Interfaces: PascalCase (`HealthStatus`).
+Funciones: camelCase exportadas (`getHealth`, `getHealthStatus`, `startHealthTracking`).
+Constants: `UPPER_SNAKE` locales (`DEFAULT_PORT`, `INSERT`); config exportada en camelCase (`port`, `dbPath`).
+Variables: camelCase. Parámetros de request/response como `Readonly<Request>` / `Readonly<Response>`.
+Tests: `{fichero}.test.ts` junto al código. `describe` nombra la unidad (`"health controller"`); `it` describe el comportamiento.
+
+### Ejemplo canónico de código
+
+```ts
+import type { Request, Response } from "express";
+import { getHealthStatus } from "./health.service.js";
+
+export const getHealth = (_req: Readonly<Request>, res: Readonly<Response>): void => {
+  const healthStatus = getHealthStatus();
+  res.json(healthStatus);
+};
+```
