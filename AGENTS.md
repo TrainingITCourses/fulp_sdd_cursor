@@ -17,28 +17,21 @@ dudas: preguntame cualquier duda que tengas. ofrece opciones y haz preguntas de 
 - **{Product_Folder}** — `.product/` — especificaciones y arquitectura
 - **{Source_Folders}** — `back/`, `front/`, `e2e/` — código fuente
 
-Documentos actuales del producto (hasta que vivan en `.product/`):
-
-- `e2e/docs/health.md` — salud de API y página de inicio
-- `e2e/docs/routing.md` — enrutado SPA, historial y 404
-- `docs/session 1/specs/vacantes.spec.md` — ejercicio de curso (CLI de vacantes)
-
 ## Producto
 
 ### Problema
 
-Curso de Spec-Driven Development (Fundación Universidad de Las Palmas, Cursor). El código actual es un scaffold demo: API de salud, SPA con rutas y pruebas e2e de aceptación.
+Plataforma para la reserva de plazas en viajes espaciales para una empresa ficticia de turismo espacial llamada Astro-Bookings.
 
 ### Solución
 
-Tres proyectos hermanos. Runtime y gestor de paquetes: Bun (>=1.4). TypeScript. Lint: Oxlint en `back` y `front`. El cliente espera la API en el puerto 3000; el front sirve en el 4000.
+Tres proyectos hermanos backend son un API Rest, frontend con una web app estándar y e2e con playwright.
 
 #### back
 
 API Express 5 de Astro-Bookings. Capas agrupadas por funcionalidad. Ficheros: `funcionalidad.artefacto.extension` (ej. `health.controller.ts`). Endpoint actual: `GET /api/health`. Puerto: `3000`. Datos demo: `DB_PATH=./data/demo.db`.
 
 - **Ruta fuente**: `back/`
-- **Reglas específicas**: `.cursor/rules/back.rules.mdc`
 
 #### front
 

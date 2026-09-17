@@ -1,9 +1,7 @@
 ---
 name: explore
 description: Genera las instrucciones raíz del proyecto y un modelo conceptual a partir de la evidencia del repositorio.
-metadata:
-  aiddbot-kind: primitive
-user-invocable: true
+user-invocable: false
 disable-model-invocation: false
 ---
 # explore
