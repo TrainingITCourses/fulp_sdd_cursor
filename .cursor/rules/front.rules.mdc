@@ -1,0 +1,76 @@
+---
+description: Restricciones para el proyecto front de Astro-Bookings
+globs: front/**/*.*
+alwaysApply: false
+---
+# Reglas de front — Astro-Bookings
+
+## Problema
+
+Cliente web de Astro-Bookings: reserva de plazas en viajes espaciales. Esta carpeta es la app HTML/CSS/TS y el servidor que la sirve; no incluye la API ni e2e.
+
+## Solución
+
+- **Código fuente**: `front/`
+- **Lenguaje**: TypeScript (ESM, `type: module`, imports con extensión `.js`)
+- **Framework**: sin framework de UI. Custom elements + Navigation API. Express 5 sirve `app/` y transpila `.ts` → `.js` al vuelo. Runtime Bun (`bun server.ts`)
+- **Pruebas**: `bun test`. `node:test` + `node:assert/strict`. Tests colocalizados `*.test.ts` (`void test("…")`). Cobertura umbral 0.80 (`bunfig.toml`).
+
+Arranque: `bun start` / `bun dev` (`--watch`). Lint `oxlint`, format `oxfmt`. Puerto `PORT` (defecto 4000). Cliente `CLIENT_SRC` (defecto `app`). API `API_BASE_URL` (inyectada en `index.html` como `globalThis.API_BASE_URL`). Rutas: `/`, `/about`, `/items/:itemId`, 404.
+
+### Dependencias
+
+- **Depende de**: `back/` (`GET /api/health`), entorno (`PORT`, `CLIENT_SRC`, `API_BASE_URL`)
+- **Usado por**: `e2e/`
+- **Librerías**: `express`; Pico CSS y fuentes vendidas en `app/styles/vendor/` (sin CDN). Tipos `@types/express`, `@types/bun`, `@types/node`
+
+### Organización del código
+
+**Patrón**: Híbrido. Infra HTTP en `server/`; cliente en `app/` por capas (`core`, `router`, `shared`).
+
+```text
+front/
+├── server.ts                      # Express: TS middleware, static, /, splat SPA
+├── server/config.ts               # PORT, CLIENT_SRC, API_BASE_URL, isDev
+├── server/ts-middleware.ts        # .js pedido → transpilado desde .ts
+├── server/indexHtml.ts            # index.html + API_BASE_URL
+├── server/splat-route.ts          # rutas sin extensión → index
+├── server/listener.ts             # listen y conflicto de puerto
+├── app/index.html                 # shell: estilos, <ab-nav-menu>, #outlet, /app.js
+├── app/app.ts                     # bootstrap: last-route + createRouter
+├── app/core/                      # create-router, create-store
+├── app/router/                    # routes + páginas (custom elements)
+├── app/shared/                    # components, store, repositories, http-client
+└── app/styles/                    # theme, colors, custom + vendor
+```
+
+## Código fuente
+
+Ficheros: kebab-case. Páginas y UI `nombre.component.ts`; estado `nombre.store.ts`; API `nombre.repository.ts`; infra de servidor por rol (`config.ts`, `listener.ts`). Excepción: `indexHtml.ts`.
+Clases: PascalCase que extienden `HTMLElement` (`HomePage`, `AboutPage`); no se exportan. Métodos privados con `#` (`#loadHealth`).
+Custom elements: `export const tagName = "ab-…"` y `customElements.define(tagName, …)`. Prefijo `ab-`.
+Funciones: camelCase (`createRouter`, `createStore`, `escapeHtml`, `getHealth`). Mix `export const` / `export function`.
+Interfaces: PascalCase (`Route`, `Store`, `HealthStatus`).
+Constants: `UPPER_SNAKE` locales (`DEFAULT_PORT`, `RETRY_DELAY_MS`); config y branding exportados en camelCase (`port`, `clientSrc`, `apiBaseUrl`, `appTitle`).
+Variables: camelCase. Params de ruta en camelCase (`itemId`) → atributo kebab (`item-id`). HTML interpolado pasa por `escapeHtml`.
+Tests: `{fichero}.test.ts` junto al código. `void test("get returns the initial value")`.
+
+### Ejemplo canónico de código
+
+```ts
+import "../shared/components/page-header.component.js";
+import { escapeHtml } from "../shared/escape-html.js";
+
+export const tagName = "ab-item-detail-page";
+
+class ItemDetailPage extends HTMLElement {
+  public connectedCallback(): void {
+    const id = escapeHtml(this.getAttribute("item-id") ?? "unknown");
+    this.innerHTML = `
+      <ab-page-header heading="Item #${id}"></ab-page-header>
+      <p>Details for item <mark>${id}</mark> — extracted from the URL.</p>`;
+  }
+}
+
+customElements.define(tagName, ItemDetailPage);
+```
