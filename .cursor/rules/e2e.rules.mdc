@@ -1,0 +1,62 @@
+---
+description: Restricciones para el proyecto e2e de Astro-Bookings
+globs: e2e/**/*.*
+alwaysApply: false
+---
+# Reglas de e2e — Astro-Bookings
+
+## Problema
+
+Suite de aceptación de Astro-Bookings: salud de API y página, y enrutado SPA. Esta carpeta no contiene la API ni el cliente; solo arranca `back/` y `front/` y verifica el comportamiento visible.
+
+## Solución
+
+- **Código fuente**: `e2e/`
+- **Lenguaje**: TypeScript (ESM, `type: module`)
+- **Framework**: Playwright (`@playwright/test`), proyecto `chromium` (`Desktop Chrome`). Runtime Bun
+- **Pruebas**: `bun test:e2e` (`playwright test`). Informe `bun test:e2e:report`. Specs en `tests/*.spec.ts`. Criterios de aceptación en `docs/`
+
+Lint: `tsc --noEmit`. Format `oxfmt`. `postinstall`: `playwright install`. Arranca `bun start` en `../back` y `../front`. `baseURL` es el front. API: `BACK_PORT` (defecto 3000). Front: `PORT` (defecto 4000). Layout: `BACK_DIRECTORY`, `FRONT_DIRECTORY`. CI: retries 2, 1 worker, `forbidOnly`. Informes en `reports/`.
+
+### Dependencias
+
+- **Depende de**: `back/` (`GET /api/health`), `front/` (SPA; `API_BASE_URL` apuntando al back)
+- **Usado por**: nadie (suite terminal)
+- **Librerías**: `playwright`, `@playwright/test`; format `oxfmt`. Tipos `@types/node`
+
+### Organización del código
+
+**Patrón**: Basado en funcionalidades. Un spec (o par api/page) por área; un doc de aceptación por área.
+
+```text
+e2e/
+├── playwright.config.ts      # webServer back+front, chromium, reporters
+├── tests/health.api.spec.ts  # GET /api/health (request)
+├── tests/health.page.spec.ts # home page (page)
+├── tests/routing.spec.ts     # SPA, historial, deep links, 404
+├── docs/health.md            # AC-HLT-*
+└── docs/routing.md           # AC-RTE-*
+```
+
+## Código fuente
+
+Ficheros: kebab-case. Specs `funcionalidad.spec.ts` o `funcionalidad.superficie.spec.ts` (`health.api.spec.ts`, `health.page.spec.ts`). Docs `docs/{funcionalidad}.md`.
+Clases: no hay en esta carpeta.
+Funciones: helpers locales camelCase (`resolveRetries`, `resolveWorkers`). Tests: `test.describe` + `test("should …")`.
+Constants: `UPPER_SNAKE` (`DEFAULT_BACK_PORT`, `API_URL`, `CI_RETRIES`); puertos/urls derivados en camelCase (`backPort`, `frontUrl`).
+Variables: camelCase. Fixtures Playwright `request` (API) y `page` (UI). Locators por rol (`getByRole`) o CSS (`locator("main")`).
+Tests: `testDir` `./tests`. `test.describe("Health API" | "Health Page" | "Client-side routing")`. Un `test` por criterio de aceptación.
+
+### Ejemplo canónico de código
+
+```ts
+import { expect, test } from "@playwright/test";
+
+test.describe("Client-side routing", () => {
+  test("should extract params from the URL", async ({ page }) => {
+    await page.goto("/items/42");
+
+    await expect(page.getByRole("heading", { name: "Item #42" })).toBeVisible();
+  });
+});
+```
