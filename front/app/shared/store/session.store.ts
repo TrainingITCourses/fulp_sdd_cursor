@@ -11,7 +11,7 @@ export interface Session {
   user: SessionUser;
 }
 
-/** Authenticated session after register; token is persisted for later requests. */
+/** Authenticated session after register or login; token is persisted for later requests. */
 export const sessionStore = createStore<Session | undefined>("session", undefined, {
   persist: true,
 });

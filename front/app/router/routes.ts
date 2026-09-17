@@ -21,6 +21,17 @@ export const routes: Route[] = [
     title: `Register — ${appTitle}`,
   },
   {
+    load: () => import("./login-page.component.js").then((m) => m.tagName),
+    menu: { href: "/login", label: "Login" },
+    pattern: new URLPattern({ pathname: "/login" }),
+    title: `Login — ${appTitle}`,
+  },
+  {
+    load: () => import("./me-page.component.js").then((m) => m.tagName),
+    pattern: new URLPattern({ pathname: "/me" }),
+    title: `My profile — ${appTitle}`,
+  },
+  {
     load: () => import("./item-detail-page.component.js").then((m) => m.tagName),
     pattern: new URLPattern({ pathname: "/items/:itemId" }),
     title: "Item — Details",

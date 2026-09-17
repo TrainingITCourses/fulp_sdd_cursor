@@ -35,7 +35,7 @@ afterEach(() => {
   globalThis.localStorage = undefined as unknown as Storage;
 });
 
-void test("sessionStore persists token and user after register", async () => {
+void test("sessionStore persists token and user after login", async () => {
   const { sessionStore } = await import("./session.store.js");
 
   assert.equal(sessionStore.get(), undefined);

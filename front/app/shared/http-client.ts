@@ -20,9 +20,9 @@ const readApiError = async (response: Response, fallback: string): Promise<strin
   return fallback;
 };
 
-const get = async <T>(path: string): Promise<T> => {
+const get = async <T>(path: string, headers?: Readonly<Record<string, string>>): Promise<T> => {
   const url = `${API_BASE_URL}${path}`;
-  const response = await fetch(url);
+  const response = await fetch(url, headers ? { headers } : undefined);
   if (!response.ok) {
     throw new Error(await readApiError(response, fallbackMessage("GET", url, response)));
   }
