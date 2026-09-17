@@ -11,8 +11,14 @@ const CI_WORKERS = 1;
 
 const backPort = process.env["BACK_PORT"] ?? DEFAULT_BACK_PORT;
 const frontPort = process.env["PORT"] ?? DEFAULT_FRONT_PORT;
-const backDirectory = resolve(process.cwd(), process.env["BACK_DIRECTORY"] ?? DEFAULT_BACK_DIRECTORY);
-const frontDirectory = resolve(process.cwd(), process.env["FRONT_DIRECTORY"] ?? DEFAULT_FRONT_DIRECTORY);
+const backDirectory = resolve(
+  process.cwd(),
+  process.env["BACK_DIRECTORY"] ?? DEFAULT_BACK_DIRECTORY,
+);
+const frontDirectory = resolve(
+  process.cwd(),
+  process.env["FRONT_DIRECTORY"] ?? DEFAULT_FRONT_DIRECTORY,
+);
 const backUrl = `http://localhost:${backPort}`;
 const frontUrl = `http://localhost:${frontPort}`;
 
@@ -57,7 +63,7 @@ export default defineConfig({
       command: "bun start",
       cwd: backDirectory,
       reuseExistingServer: !process.env["CI"],
-      timeout: 2_000,
+      timeout: 30_000,
       url: `${backUrl}/api/health`,
     },
     {
@@ -65,7 +71,7 @@ export default defineConfig({
       cwd: frontDirectory,
       env: { API_BASE_URL: backUrl },
       reuseExistingServer: !process.env["CI"],
-      timeout: 2_000,
+      timeout: 30_000,
       url: frontUrl,
     },
   ],

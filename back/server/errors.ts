@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import { coerceToFiniteNumber } from "../shared/type.utils.js";
 
 export class ApiError extends Error {
   public readonly status: number;
@@ -16,13 +17,11 @@ interface HttpError {
   message?: string;
 }
 
-
-const CLIENT_ERROR_MIN = 400,
- SERVER_ERROR_MIN = 500,
-
- pickBadRequestMessage = (
-  expose: boolean | undefined,
-  message: string | undefined,
+const CLIENT_ERROR_MIN = 400;
+const SERVER_ERROR_MIN = 500;
+const pickBadRequestMessage = (
+  expose: Readonly<boolean | undefined>,
+  message: Readonly<string | undefined>,
 ): string => {
   if (expose && message) {
     return message;
@@ -30,27 +29,40 @@ const CLIENT_ERROR_MIN = 400,
   return "Bad request";
 };
 
-// eslint-disable-next-line max-params
-export const errorHandler = (
-  err: unknown,
-  _req: Request,
-  res: Response,
-  _next: NextFunction,
-): void => {
-  if (err instanceof ApiError) {
-    res.status(err.status).json({ error: err.message });
-    return;
-  }
-  /* Http-errors convention used by body-parser and friends (e.g. malformed JSON). */
-  const { statusCode, expose, message } = (err ?? {}) as HttpError;
-  if (
-    typeof statusCode === "number" &&
-    statusCode >= CLIENT_ERROR_MIN &&
-    statusCode < SERVER_ERROR_MIN
-  ) {
-    res.status(statusCode).json({ error: pickBadRequestMessage(expose, message) });
-    return;
-  }
-  process.stderr.write(`${String(err)}\n`);
+const getHttpError = (err: Readonly<unknown>): HttpError => err ?? {};
+
+const toStatusCode = (http: Readonly<HttpError>): number =>
+  coerceToFiniteNumber(http.statusCode, CLIENT_ERROR_MIN);
+
+const isClientError = (status: number): boolean =>
+  status >= CLIENT_ERROR_MIN && status < SERVER_ERROR_MIN;
+const handleApiError = (err: Readonly<unknown>, res: Readonly<Response>): boolean => {
+  if (!(err instanceof ApiError)) return false;
+  res.status(err.status).json({ error: err.message });
+  return true;
+};
+
+const handleClientError = (err: Readonly<unknown>, res: Readonly<Response>): boolean => {
+  const http = getHttpError(err);
+  const status = toStatusCode(http);
+  if (!isClientError(status)) return false;
+  res.status(status).json({ error: pickBadRequestMessage(http.expose, http.message) });
+  return true;
+};
+
+const handleServerError = (err: Readonly<unknown>, res: Readonly<Response>): void => {
+  const errorMessage = err instanceof Error ? err.message : "Unknown error";
+  process.stderr.write(`${errorMessage}\n`);
   res.status(SERVER_ERROR_MIN).json({ error: "Internal server error" });
+};
+
+export const errorHandler = (
+  err: Readonly<unknown>,
+  _req: Readonly<Request>,
+  res: Readonly<Response>,
+  _next: Readonly<NextFunction>,
+): void => {
+  if (handleApiError(err, res)) return;
+  if (handleClientError(err, res)) return;
+  handleServerError(err, res);
 };

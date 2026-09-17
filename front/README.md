@@ -1,6 +1,8 @@
-# [front-standard](https://github.com/AIDDbot/front-standard)
+# Astro-Bookings web (`front`)
 
-Archetype with boilerplate code for a front web app with standard HTML, CSS and JS (TypeScript stripped on the fly). No frameworks, no build step, no CDN dependencies.
+Standard web client for Astro-Bookings. Scaffolded from the [front-standard](https://github.com/AIDDbot/front-standard) archetype.
+
+Plain HTML, CSS and JS (TypeScript stripped on the fly). No frameworks, no build step, no CDN dependencies.
 
 ## Quick start
 
@@ -8,8 +10,9 @@ Archetype with boilerplate code for a front web app with standard HTML, CSS and 
 > this projects uses `bun` as a package manager and runner.
 
 1. Install bun: the fastest tooling manager for Node.js projects.
+
 ```bash
-# Install Bun 
+# Install Bun
 # (Windows PowerShell)
 powershell -c "irm bun.com/install.ps1 | iex"
 # (macOS/Linux)
@@ -21,6 +24,7 @@ bun upgrade --stable
 ```
 
 2. Install dependencies and run the tests
+
 ```bash
 bun install
 bun start   # runs the server in production mode
@@ -28,15 +32,16 @@ bun test    # runs the unit tests
 bun dev     # runs in watch mode for development
 bun lint    # runs the linter
 ```
+
 > [!IMPORTANT]
-> The client expects the API (the `back` project) on port 3000. 
+> The client expects the API (the `back` project) on port 3000.
 
 ## Tool stack
 
 - [TypeScript7](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/) : typed superset of JavaScript that compiles to plain JavaScript.
 - [Node26](https://nodejs.org/es/blog/release/v26.0.0/) : JavaScript runtime built on Chrome's V8 JavaScript engine.
 - [Bun 1.4.0](https://bun.com/docs/installation) : JavaScript runtime and package manager used by this project.
-- [Oxlint](https://oxc.rs/docs/guide/usage/linter) : high-performance linter for  TypeScript 
+- [Oxlint](https://oxc.rs/docs/guide/usage/linter) : high-performance linter for TypeScript
 
 ---
 

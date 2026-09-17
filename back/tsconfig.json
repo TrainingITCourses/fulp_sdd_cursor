@@ -6,7 +6,8 @@
     "target": "esnext",
     // "lib": ["es2024" ],
     "types": [
-      "node"
+      "node",
+      "bun"
     ],
     "noEmit": true,
     // Other Outputs

@@ -7,7 +7,7 @@ export const tagName = "ab-about-page";
 class AboutPage extends HTMLElement {
   public connectedCallback(): void {
     this.innerHTML = `
-      <ab-page-header heading="About" subtitle="Express demo — built on web standards only."></ab-page-header>
+      <ab-page-header heading="About" subtitle="Space travel agency — seats on rocket launches, built on web standards only."></ab-page-header>
       <p>Routing via the Navigation API, components as custom elements loaded on demand.</p>
       <p id="health-status">Loading health…</p>`;
 
@@ -32,7 +32,7 @@ class AboutPage extends HTMLElement {
     }
   }
 
-  #renderHealth({ uptime, runs }: HealthStatus): void {
+  #renderHealth({ uptime, runs }: Readonly<HealthStatus>): void {
     const statusEl = this.querySelector("#health-status");
     if (statusEl) {
       statusEl.textContent = `Server up for ${Math.floor(uptime)}s — ${runs} run(s) recorded.`;

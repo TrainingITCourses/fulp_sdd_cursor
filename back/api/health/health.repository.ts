@@ -1,4 +1,5 @@
 import { getDb } from "../../server/db.js";
+import { coerceToFiniteNumber } from "../../shared/type.utils.js";
 
 export const initHealthRepository = (): void => {
   getDb().exec(`
@@ -15,9 +16,13 @@ export const recordRun = (): void => {
 };
 
 export const getRunsCount = (): number => {
-  const SELECT = "SELECT COUNT(*) AS count FROM runs",
-   { count } = getDb().prepare(SELECT).get() as {
-    count: number;
-  };
-  return count;
+  const SELECT = "SELECT COUNT(*) AS count FROM runs";
+  const row = getDb().prepare(SELECT).get();
+
+  // Some SQLite drivers may return numeric values as strings or other types.
+  // Coerce to a finite number with a safe fallback.
+  if (row && typeof row === "object" && "count" in row) {
+    return coerceToFiniteNumber((row as Record<string, unknown>)["count"], 0);
+  }
+  return 0;
 };

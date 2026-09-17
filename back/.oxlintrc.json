@@ -14,15 +14,35 @@
     "correctness": "error",
     "suspicious": "warn",
     "pedantic": "warn",
-    "style": "warn"
+    "style": "off"
   },
   "rules": {
-    "eslint/sort-imports": "off",
-    "eslint/complexity": [
+    "eslint/one-var": [
       "error",
-      8
-    ]
+      "never"
+    ],
+    "eslint/sort-imports": "off",
+    "eslint/sort-vars": "off",
+    "@typescript-eslint/strict-boolean-expressions": "off",
+    "@typescript-eslint/prefer-readonly-parameter-types": "off"
   },
+  "overrides": [
+    {
+      "files": [
+        "**/*.test.ts",
+        "**/*.spec.ts"
+      ],
+      "rules": {
+        "@typescript-eslint/prefer-readonly-parameter-types": "off",
+        "typescript/no-unsafe-type-assertion": "off",
+        "typescript/no-unsafe-call": "off",
+        "typescript/no-unsafe-member-access": "off",
+        "typescript/no-unsafe-assignment": "off",
+        "unicorn/no-useless-undefined": "off",
+        "oxc/approx-constant": "off"
+      },
+    }
+  ],
   "env": {
     "builtin": true
   }

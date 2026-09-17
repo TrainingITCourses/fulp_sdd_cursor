@@ -1,6 +1,6 @@
-# [e2e-playwright](https://github.com/AIDDbot/e2e-playwright)
+# Astro-Bookings end-to-end tests (`e2e`)
 
-End-to-end Playwright suite for an api and web application.
+Playwright suite for Astro-Bookings. Scaffolded from the [e2e-playwright](https://github.com/AIDDbot/e2e-playwright) archetype.
 
 ## Quick start
 
@@ -8,8 +8,9 @@ End-to-end Playwright suite for an api and web application.
 > this projects uses `bun` as a package manager and runner.
 
 1. Install bun: the fastest tooling manager for Node.js projects.
+
 ```bash
-# Install Bun 
+# Install Bun
 # (Windows PowerShell)
 powershell -c "irm bun.com/install.ps1 | iex"
 # (macOS/Linux)
@@ -21,6 +22,7 @@ bun upgrade --stable
 ```
 
 2. Install dependencies and run the tests
+
 ```bash
 bun install
 bun lint            # runs the linter

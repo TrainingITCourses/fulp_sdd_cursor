@@ -2,11 +2,20 @@ import assert from "node:assert/strict";
 import { afterEach, beforeEach, test } from "node:test";
 import { createStore } from "./create-store.js";
 
+// Named constants for test values
+const INITIAL_COUNT = 0;
+const TEST_COUNT_FIVE = 5;
+const TEST_COUNT_ONE = 1;
+const TEST_COUNT_FORTY_TWO = 42;
+const TEST_COUNT_SEVEN = 7;
+
 // Minimal localStorage stub so the persist branch is testable outside the browser.
 function createLocalStorageStub(): Storage {
   const data = new Map<string, string>();
   return {
-    clear: () => { data.clear(); },
+    clear: () => {
+      data.clear();
+    },
     // The built-in Storage interface returns `null` for a missing entry — not
     // `undefined` — so the stub has to match that contract.
     // oxlint-disable-next-line unicorn/no-null
@@ -35,44 +44,48 @@ afterEach(() => {
 });
 
 void test("get returns the initial value", () => {
-  const store = createStore("count", 0);
-  assert.equal(store.get(), 0);
+  const store = createStore("count", INITIAL_COUNT);
+  assert.equal(store.get(), INITIAL_COUNT);
 });
 
 void test("set updates the value and notifies subscribers", () => {
-  const store = createStore("count", 0),
-    seen: number[] = [];
-  store.subscribe((value) => seen.push(value));
+  const store = createStore("count", INITIAL_COUNT);
+  const seen: number[] = [];
+  store.subscribe((value) => {
+    seen.push(value);
+  });
 
-  store.set(5);
+  store.set(TEST_COUNT_FIVE);
 
-  assert.equal(store.get(), 5);
-  assert.deepEqual(seen, [5]);
+  assert.equal(store.get(), TEST_COUNT_FIVE);
+  assert.deepEqual(seen, [TEST_COUNT_FIVE]);
 });
 
 void test("subscribe's returned function stops further notifications", () => {
-  const store = createStore("count", 0),
-    seen: number[] = [],
-    unsubscribe = store.subscribe((value) => seen.push(value));
+  const store = createStore("count", INITIAL_COUNT);
+  const seen: number[] = [];
+  const unsubscribe = store.subscribe((value) => {
+    seen.push(value);
+  });
   unsubscribe();
 
-  store.set(1);
+  store.set(TEST_COUNT_ONE);
 
   assert.deepEqual(seen, []);
 });
 
 void test("persist: true restores a previously stored value", () => {
-  localStorage.setItem("count", JSON.stringify(42));
+  localStorage.setItem("count", JSON.stringify(TEST_COUNT_FORTY_TWO));
 
-  const store = createStore("count", 0, { persist: true });
+  const store = createStore("count", INITIAL_COUNT, { persist: true });
 
-  assert.equal(store.get(), 42);
+  assert.equal(store.get(), TEST_COUNT_FORTY_TWO);
 });
 
 void test("persist: true writes updates to localStorage", () => {
-  const store = createStore("count", 0, { persist: true });
+  const store = createStore("count", INITIAL_COUNT, { persist: true });
 
-  store.set(7);
+  store.set(TEST_COUNT_SEVEN);
 
   assert.equal(localStorage.getItem("count"), "7");
 });
@@ -80,7 +93,7 @@ void test("persist: true writes updates to localStorage", () => {
 void test("persist: true keeps the initial value when storage is corrupt", () => {
   localStorage.setItem("count", "{not json");
 
-  const store = createStore("count", 0, { persist: true });
+  const store = createStore("count", INITIAL_COUNT, { persist: true });
 
-  assert.equal(store.get(), 0);
+  assert.equal(store.get(), INITIAL_COUNT);
 });

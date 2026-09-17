@@ -216,12 +216,12 @@ details summary[role="button"]:not(.outline)::after {
   filter: brightness(0) invert(1);
 }
 [aria-busy="true"]:not(input, select, textarea):is(
-  button,
-  [type="submit"],
-  [type="button"],
-  [type="reset"],
-  [role="button"]
-):not(.outline)::before {
+    button,
+    [type="submit"],
+    [type="button"],
+    [type="reset"],
+    [role="button"]
+  ):not(.outline)::before {
   filter: brightness(0) invert(1);
 }
 :host(:not([data-theme="dark"])),
@@ -936,11 +936,11 @@ del {
   --pico-underline: var(--pico-secondary-underline);
 }
 :where(a:not([role="button"])).secondary:is(
-  [aria-current]:not([aria-current="false"]),
-  :hover,
-  :active,
-  :focus
-),
+    [aria-current]:not([aria-current="false"]),
+    :hover,
+    :active,
+    :focus
+  ),
 [role="link"].secondary:is([aria-current]:not([aria-current="false"]), :hover, :active, :focus) {
   --pico-color: var(--pico-secondary-hover);
   --pico-underline: var(--pico-secondary-hover-underline);
@@ -951,11 +951,11 @@ del {
   --pico-underline: var(--pico-contrast-underline);
 }
 :where(a:not([role="button"])).contrast:is(
-  [aria-current]:not([aria-current="false"]),
-  :hover,
-  :active,
-  :focus
-),
+    [aria-current]:not([aria-current="false"]),
+    :hover,
+    :active,
+    :focus
+  ),
 [role="link"].contrast:is([aria-current]:not([aria-current="false"]), :hover, :active, :focus) {
   --pico-color: var(--pico-contrast-hover);
   --pico-underline: var(--pico-contrast-hover-underline);
@@ -1054,17 +1054,17 @@ button:is([aria-current]:not([aria-current="false"])):focus {
   cursor: pointer;
 }
 :is(button, [type="submit"], [type="button"], [role="button"]).secondary:is(
-  [aria-current]:not([aria-current="false"]),
-  :hover,
-  :active,
-  :focus
-),
+    [aria-current]:not([aria-current="false"]),
+    :hover,
+    :active,
+    :focus
+  ),
 [type="file"]::file-selector-button:is(
-  [aria-current]:not([aria-current="false"]),
-  :hover,
-  :active,
-  :focus
-),
+    [aria-current]:not([aria-current="false"]),
+    :hover,
+    :active,
+    :focus
+  ),
 [type="reset"]:is([aria-current]:not([aria-current="false"]), :hover, :active, :focus) {
   --pico-background-color: var(--pico-secondary-hover-background);
   --pico-border-color: var(--pico-secondary-hover-border);
@@ -1072,8 +1072,8 @@ button:is([aria-current]:not([aria-current="false"])):focus {
 }
 :is(button, [type="submit"], [type="button"], [role="button"]).secondary:focus,
 :is(button, [type="submit"], [type="button"], [role="button"]).secondary:is(
-  [aria-current]:not([aria-current="false"])
-):focus,
+    [aria-current]:not([aria-current="false"])
+  ):focus,
 [type="file"]::file-selector-button:focus,
 [type="file"]::file-selector-button:is([aria-current]:not([aria-current="false"])):focus,
 [type="reset"]:focus,
@@ -1088,19 +1088,19 @@ button:is([aria-current]:not([aria-current="false"])):focus {
   --pico-color: var(--pico-contrast-inverse);
 }
 :is(button, [type="submit"], [type="button"], [role="button"]).contrast:is(
-  [aria-current]:not([aria-current="false"]),
-  :hover,
-  :active,
-  :focus
-) {
+    [aria-current]:not([aria-current="false"]),
+    :hover,
+    :active,
+    :focus
+  ) {
   --pico-background-color: var(--pico-contrast-hover-background);
   --pico-border-color: var(--pico-contrast-hover-border);
   --pico-color: var(--pico-contrast-inverse);
 }
 :is(button, [type="submit"], [type="button"], [role="button"]).contrast:focus,
 :is(button, [type="submit"], [type="button"], [role="button"]).contrast:is(
-  [aria-current]:not([aria-current="false"])
-):focus {
+    [aria-current]:not([aria-current="false"])
+  ):focus {
   --pico-box-shadow:
     var(--pico-button-hover-box-shadow, 0 0 0 rgba(0, 0, 0, 0)),
     0 0 0 var(--pico-outline-width) var(--pico-contrast-focus);
@@ -1112,11 +1112,11 @@ button:is([aria-current]:not([aria-current="false"])):focus {
   --pico-border-color: var(--pico-primary);
 }
 :is(button, [type="submit"], [type="button"], [role="button"]).outline:is(
-  [aria-current]:not([aria-current="false"]),
-  :hover,
-  :active,
-  :focus
-),
+    [aria-current]:not([aria-current="false"]),
+    :hover,
+    :active,
+    :focus
+  ),
 [type="reset"].outline:is([aria-current]:not([aria-current="false"]), :hover, :active, :focus) {
   --pico-background-color: transparent;
   --pico-color: var(--pico-primary-hover);
@@ -1128,11 +1128,11 @@ button:is([aria-current]:not([aria-current="false"])):focus {
   --pico-border-color: var(--pico-secondary);
 }
 :is(button, [type="submit"], [type="button"], [role="button"]).outline.secondary:is(
-  [aria-current]:not([aria-current="false"]),
-  :hover,
-  :active,
-  :focus
-),
+    [aria-current]:not([aria-current="false"]),
+    :hover,
+    :active,
+    :focus
+  ),
 [type="reset"].outline:is([aria-current]:not([aria-current="false"]), :hover, :active, :focus) {
   --pico-color: var(--pico-secondary-hover);
   --pico-border-color: var(--pico-secondary-hover);
@@ -1142,11 +1142,11 @@ button:is([aria-current]:not([aria-current="false"])):focus {
   --pico-border-color: var(--pico-contrast);
 }
 :is(button, [type="submit"], [type="button"], [role="button"]).outline.contrast:is(
-  [aria-current]:not([aria-current="false"]),
-  :hover,
-  :active,
-  :focus
-) {
+    [aria-current]:not([aria-current="false"]),
+    :hover,
+    :active,
+    :focus
+  ) {
   --pico-color: var(--pico-contrast-hover);
   --pico-border-color: var(--pico-contrast-hover);
 }
@@ -1400,31 +1400,31 @@ textarea {
 }
 :where(select, textarea):not([readonly]):is(:active, :focus),
 input:not(
-  [type="submit"],
-  [type="button"],
-  [type="reset"],
-  [type="checkbox"],
-  [type="radio"],
-  [readonly]
-):is(:active, :focus) {
+    [type="submit"],
+    [type="button"],
+    [type="reset"],
+    [type="checkbox"],
+    [type="radio"],
+    [readonly]
+  ):is(:active, :focus) {
   --pico-background-color: var(--pico-form-element-active-background-color);
 }
 :where(select, textarea):not([readonly]):is(:active, :focus),
 input:not([type="submit"], [type="button"], [type="reset"], [role="switch"], [readonly]):is(
-  :active,
-  :focus
-) {
+    :active,
+    :focus
+  ) {
   --pico-border-color: var(--pico-form-element-active-border-color);
 }
 :where(select, textarea):not([readonly]):focus,
 input:not(
-  [type="submit"],
-  [type="button"],
-  [type="reset"],
-  [type="range"],
-  [type="file"],
-  [readonly]
-):focus {
+    [type="submit"],
+    [type="button"],
+    [type="reset"],
+    [type="range"],
+    [type="file"],
+    [readonly]
+  ):focus {
   --pico-box-shadow: 0 0 0 var(--pico-outline-width) var(--pico-form-element-focus-color);
 }
 :where(fieldset[disabled])
@@ -1440,15 +1440,15 @@ label[aria-disabled="true"] input[disabled] {
   opacity: 1;
 }
 :where(input, select, textarea):not(
-  [type="checkbox"],
-  [type="radio"],
-  [type="date"],
-  [type="datetime-local"],
-  [type="month"],
-  [type="time"],
-  [type="week"],
-  [type="range"]
-)[aria-invalid] {
+    [type="checkbox"],
+    [type="radio"],
+    [type="date"],
+    [type="datetime-local"],
+    [type="month"],
+    [type="time"],
+    [type="week"],
+    [type="range"]
+  )[aria-invalid] {
   padding-right: calc(var(--pico-form-element-spacing-horizontal) + 1.5rem) !important;
   padding-left: var(--pico-form-element-spacing-horizontal);
   padding-inline-start: var(--pico-form-element-spacing-horizontal) !important;
@@ -1458,27 +1458,27 @@ label[aria-disabled="true"] input[disabled] {
   background-repeat: no-repeat;
 }
 :where(input, select, textarea):not(
-  [type="checkbox"],
-  [type="radio"],
-  [type="date"],
-  [type="datetime-local"],
-  [type="month"],
-  [type="time"],
-  [type="week"],
-  [type="range"]
-)[aria-invalid="false"]:not(select) {
+    [type="checkbox"],
+    [type="radio"],
+    [type="date"],
+    [type="datetime-local"],
+    [type="month"],
+    [type="time"],
+    [type="week"],
+    [type="range"]
+  )[aria-invalid="false"]:not(select) {
   background-image: var(--pico-icon-valid);
 }
 :where(input, select, textarea):not(
-  [type="checkbox"],
-  [type="radio"],
-  [type="date"],
-  [type="datetime-local"],
-  [type="month"],
-  [type="time"],
-  [type="week"],
-  [type="range"]
-)[aria-invalid="true"]:not(select) {
+    [type="checkbox"],
+    [type="radio"],
+    [type="date"],
+    [type="datetime-local"],
+    [type="month"],
+    [type="time"],
+    [type="week"],
+    [type="range"]
+  )[aria-invalid="true"]:not(select) {
   background-image: var(--pico-icon-invalid);
 }
 :where(input, select, textarea)[aria-invalid="false"] {
@@ -1488,9 +1488,9 @@ label[aria-disabled="true"] input[disabled] {
   --pico-border-color: var(--pico-form-element-valid-active-border-color) !important;
 }
 :where(input, select, textarea)[aria-invalid="false"]:is(:active, :focus):not(
-  [type="checkbox"],
-  [type="radio"]
-) {
+    [type="checkbox"],
+    [type="radio"]
+  ) {
   --pico-box-shadow: 0 0 0 var(--pico-outline-width) var(--pico-form-element-valid-focus-color) !important;
 }
 :where(input, select, textarea)[aria-invalid="true"] {
@@ -1500,9 +1500,9 @@ label[aria-disabled="true"] input[disabled] {
   --pico-border-color: var(--pico-form-element-invalid-active-border-color) !important;
 }
 :where(input, select, textarea)[aria-invalid="true"]:is(:active, :focus):not(
-  [type="checkbox"],
-  [type="radio"]
-) {
+    [type="checkbox"],
+    [type="radio"]
+  ) {
   --pico-box-shadow: 0 0 0 var(--pico-outline-width) var(--pico-form-element-invalid-focus-color) !important;
 }
 [dir="rtl"]
@@ -1729,12 +1729,12 @@ label:has([type="checkbox"], [type="radio"]) {
   border-radius: calc(var(--pico-border-radius) * 0.5);
 }
 input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]):is(
-  [type="date"],
-  [type="datetime-local"],
-  [type="month"],
-  [type="time"],
-  [type="week"]
-) {
+    [type="date"],
+    [type="datetime-local"],
+    [type="month"],
+    [type="time"],
+    [type="week"]
+  ) {
   --pico-icon-position: 0.75rem;
   --pico-icon-width: 1rem;
   padding-right: calc(var(--pico-icon-width) + var(--pico-icon-position));
@@ -1907,30 +1907,30 @@ input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"])[type
   background-repeat: no-repeat;
 }
 input:not(
-  [type="checkbox"],
-  [type="radio"],
-  [type="range"],
-  [type="file"]
-)[type="search"][aria-invalid] {
+    [type="checkbox"],
+    [type="radio"],
+    [type="range"],
+    [type="file"]
+  )[type="search"][aria-invalid] {
   padding-inline-start: calc(var(--pico-form-element-spacing-horizontal) + 1.75rem) !important;
   background-position:
     center left 1.125rem,
     center right 0.75rem;
 }
 input:not(
-  [type="checkbox"],
-  [type="radio"],
-  [type="range"],
-  [type="file"]
-)[type="search"][aria-invalid="false"] {
+    [type="checkbox"],
+    [type="radio"],
+    [type="range"],
+    [type="file"]
+  )[type="search"][aria-invalid="false"] {
   background-image: var(--pico-icon-search), var(--pico-icon-valid);
 }
 input:not(
-  [type="checkbox"],
-  [type="radio"],
-  [type="range"],
-  [type="file"]
-)[type="search"][aria-invalid="true"] {
+    [type="checkbox"],
+    [type="radio"],
+    [type="range"],
+    [type="file"]
+  )[type="search"][aria-invalid="true"] {
   background-image: var(--pico-icon-search), var(--pico-icon-invalid);
 }
 [dir="rtl"]

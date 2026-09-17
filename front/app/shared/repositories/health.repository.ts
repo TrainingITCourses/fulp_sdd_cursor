@@ -4,4 +4,4 @@ export interface HealthStatus {
   runs: number;
 }
 
-export const getHealth = async (): Promise<HealthStatus> => get<HealthStatus>("/api/health");
+export const getHealth = (): Promise<HealthStatus> => get<HealthStatus>("/api/health");

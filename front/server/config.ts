@@ -18,12 +18,12 @@ export const staticOptions = {
   index: false as const,
   ...(isDev
     ? {
-      etag: false,
-      lastModified: false,
-      maxAge: 0,
-      setHeaders(res: { setHeader(name: string, value: string): void }) {
-        setNoCache(res);
-      },
-    }
+        etag: false,
+        lastModified: false,
+        maxAge: 0,
+        setHeaders(res: { setHeader(name: string, value: string): void }) {
+          setNoCache(res);
+        },
+      }
     : {}),
 };

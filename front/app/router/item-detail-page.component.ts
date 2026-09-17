@@ -1,10 +1,11 @@
 import "../shared/components/page-header.component.js";
+import { escapeHtml } from "../shared/escape-html.js";
 
 export const tagName = "ab-item-detail-page";
 
 class ItemDetailPage extends HTMLElement {
   public connectedCallback(): void {
-    const id = this.getAttribute("item-id") ?? "unknown";
+    const id = escapeHtml(this.getAttribute("item-id") ?? "unknown");
     this.innerHTML = `
       <ab-page-header heading="Item #${id}"></ab-page-header>
       <p>Details for item <mark>${id}</mark> — extracted from the URL.</p>
