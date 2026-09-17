@@ -1,8 +1,9 @@
 const DEFAULT_PORT = 4000;
+const DEFAULT_API_BASE_URL = "http://localhost:3000";
 
 export const port = process.env["PORT"] ? Number(process.env["PORT"]) : DEFAULT_PORT;
 export const clientSrc = process.env["CLIENT_SRC"] ?? "app";
-export const apiBaseUrl = process.env["API_BASE_URL"] ?? "";
+export const apiBaseUrl = process.env["API_BASE_URL"] ?? DEFAULT_API_BASE_URL;
 
 /** Production when started via `start` script or NODE_ENV=production. */
 export const isProduction =
@@ -18,12 +19,12 @@ export const staticOptions = {
   index: false as const,
   ...(isDev
     ? {
-        etag: false,
-        lastModified: false,
-        maxAge: 0,
-        setHeaders(res: { setHeader(name: string, value: string): void }) {
-          setNoCache(res);
-        },
-      }
+      etag: false,
+      lastModified: false,
+      maxAge: 0,
+      setHeaders(res: { setHeader(name: string, value: string): void }) {
+        setNoCache(res);
+      },
+    }
     : {}),
 };
