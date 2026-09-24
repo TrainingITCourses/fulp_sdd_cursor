@@ -44,6 +44,21 @@ export const routes: Route[] = [
     pattern: new URLPattern({ pathname: "/rockets/:rocketId" }),
     title: `Rocket — ${appTitle}`,
   },
+  {
+    load: () => import("./launches-page.component.js").then((m) => m.tagName),
+    pattern: new URLPattern({ pathname: "/launches" }),
+    title: `Launches — ${appTitle}`,
+  },
+  {
+    load: () => import("./launch-form-page.component.js").then((m) => m.tagName),
+    pattern: new URLPattern({ pathname: "/launches/new" }),
+    title: `Plan a launch — ${appTitle}`,
+  },
+  {
+    load: () => import("./launch-detail-page.component.js").then((m) => m.tagName),
+    pattern: new URLPattern({ pathname: "/launches/:launchId" }),
+    title: `Launch — ${appTitle}`,
+  },
 ];
 
 export const menuLinks = routes.flatMap((route) => (route.menu ? [route.menu] : []));
