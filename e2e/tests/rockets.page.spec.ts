@@ -69,7 +69,7 @@ test.describe("Rockets pages", () => {
 
     await expect(page).toHaveURL(/\/rockets\/\d+$/);
     await expect(page.getByRole("heading", { name })).toBeVisible();
-    await expect(page.getByText("Moon")).toBeVisible();
+    await expect(page.locator("#rocket-range-label")).toHaveText("Moon");
   });
 
   test("AC-RKT-15 saves a new name and range on the detail", async ({ page, request }) => {
