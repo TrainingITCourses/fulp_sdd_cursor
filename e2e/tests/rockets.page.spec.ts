@@ -49,12 +49,14 @@ test.describe("Rockets pages", () => {
     request,
   }) => {
     const email = uniqueEmail("create");
-    await request.post(`${process.env["E2E_BACK_URL"]}/api/auth/register`, {
+    const registered = await request.post(`${process.env["E2E_BACK_URL"]}/api/auth/register`, {
       data: { email, name: authFixture.users.ada.name, password: authFixture.users.ada.password },
     });
+    expect(registered.status()).toBe(201);
     const loginPage = new LoginPage(page);
     await loginPage.goto();
     await loginPage.submit({ email, password: authFixture.users.ada.password });
+    await expect(page.getByRole("link", { name: "Rockets" })).toBeVisible();
 
     const form = new RocketFormPage(page);
     await form.goto();
@@ -72,12 +74,14 @@ test.describe("Rockets pages", () => {
 
   test("AC-RKT-15 saves a new name and range on the detail", async ({ page, request }) => {
     const email = uniqueEmail("edit");
-    await request.post(`${process.env["E2E_BACK_URL"]}/api/auth/register`, {
+    const registered = await request.post(`${process.env["E2E_BACK_URL"]}/api/auth/register`, {
       data: { email, name: authFixture.users.ada.name, password: authFixture.users.ada.password },
     });
+    expect(registered.status()).toBe(201);
     const loginPage = new LoginPage(page);
     await loginPage.goto();
     await loginPage.submit({ email, password: authFixture.users.ada.password });
+    await expect(page.getByRole("link", { name: "Rockets" })).toBeVisible();
 
     const form = new RocketFormPage(page);
     await form.goto();
@@ -98,12 +102,14 @@ test.describe("Rockets pages", () => {
 
   test("AC-RKT-16 disables a rocket and hides the disable button", async ({ page, request }) => {
     const email = uniqueEmail("off");
-    await request.post(`${process.env["E2E_BACK_URL"]}/api/auth/register`, {
+    const registered = await request.post(`${process.env["E2E_BACK_URL"]}/api/auth/register`, {
       data: { email, name: authFixture.users.ada.name, password: authFixture.users.ada.password },
     });
+    expect(registered.status()).toBe(201);
     const loginPage = new LoginPage(page);
     await loginPage.goto();
     await loginPage.submit({ email, password: authFixture.users.ada.password });
+    await expect(page.getByRole("link", { name: "Rockets" })).toBeVisible();
 
     const form = new RocketFormPage(page);
     await form.goto();
