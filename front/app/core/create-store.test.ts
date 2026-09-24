@@ -39,8 +39,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-  globalThis.localStorage = undefined as unknown as Storage;
+  globalThis.localStorage = createLocalStorageStub();
 });
 
 void test("get returns the initial value", () => {

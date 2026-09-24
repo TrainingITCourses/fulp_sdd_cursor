@@ -45,7 +45,8 @@ class NavMenu extends HTMLElement {
   #renderAuthLinks(): string {
     const session = authStore.get();
     if (session) {
-      return `<li>${escapeHtml(session.user.name)} (${escapeHtml(session.user.role)})</li>`;
+      return `<li><a href="/rockets">Rockets</a></li>
+            <li>${escapeHtml(session.user.name)} (${escapeHtml(session.user.role)})</li>`;
     }
     return `<li><a href="/register">Register</a></li>
             <li><a href="/login">Login</a></li>`;

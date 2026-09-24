@@ -1,5 +1,6 @@
 import { createLogger } from "../core/create-logger.js";
 import { isErrorBody } from "./is-error-body.js";
+import { authStore } from "./store/auth.store.js";
 
 declare global {
   var API_BASE_URL: string;
@@ -32,24 +33,37 @@ const ensureOk = async (method: string, url: string, response: Response): Promis
   throw new Error(message);
 };
 
+const jsonHeaders = (): Record<string, string> => {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const token = authStore.get()?.token;
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 const get = async <T>(path: string): Promise<T> => {
   const url = `${API_BASE_URL}${path}`;
-  const response = await fetch(url);
+  const response = await fetch(url, { headers: jsonHeaders() });
   await ensureOk("GET", url, response);
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   return response.json() as Promise<T>;
 };
 
-const post = async <T>(path: string, body: unknown): Promise<T> => {
+const sendJson = async <T>(method: string, path: string, body: unknown): Promise<T> => {
   const url = `${API_BASE_URL}${path}`;
   const response = await fetch(url, {
     body: JSON.stringify(body),
-    headers: { "Content-Type": "application/json" },
-    method: "POST",
+    headers: jsonHeaders(),
+    method,
   });
-  await ensureOk("POST", url, response);
+  await ensureOk(method, url, response);
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   return response.json() as Promise<T>;
 };
 
-export { get, post };
+const post = <T>(path: string, body: unknown): Promise<T> => sendJson<T>("POST", path, body);
+
+const patch = <T>(path: string, body: unknown): Promise<T> => sendJson<T>("PATCH", path, body);
+
+export { get, patch, post };
