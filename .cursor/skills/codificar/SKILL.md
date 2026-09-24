@@ -1,43 +1,44 @@
 ---
 name: codificar
-description: Implementa la funcionalidad de una spec. Recibe la spec, crea la rama feat/spec-slug, codifica proyecto a proyecto, lint y formato, commit por proyecto, tests unitarios en back y front, crea e2e sin ejecutarlos, y mergea con la rama default. Usar cuando el usuario pida implementar una spec, codificar una funcionalidad especificada, o invoque /codificar.
+description: Implementa la funcionalidad de una spec en un proyecto concreto.  Usar cuando necesites programar la cpa física de un feature especificado.
 user-invocable: true
 disable-model-invocation: false
 ---
 # codificar
 
-Tu objetivo es implementar la funcionalidad de una spec.
+Tu objetivo es implementar la funcionalidad de una spec en una capa física (back, o front o e2e)
 
-Debe recibir la spec. crear un rama `feat/spec-slug` y codificar en ella. Ir proyecto a proyecto. Para cada uno asegurar un lint básico y un formato legible. Comitear cada proyecto. Al acabar mergear con la rama default. No ejecutes pruebas e2e., solo crearlas. haz test unitario de los proyectos de produccion.
+Debe recibir la spec y la rama. 
+Crear o reutilizar un rama `feat/spec-slug` y codificar en ella. 
+Ir al proyecto especificado y codificar. 
+Asegurar un lint básico y un formato legible. 
+Comitear al terminar. 
+Para proyectos de producción (back o front) desarrollar tests unitarios y probarlos.
 
 ## Entrada
 
 Si el usuario no adjunta la spec, léela de `{Product_Folder}/specs/`. El slug es el nombre del fichero sin extensión (`registro-usuario.soec.md` → `registro-usuario`).
 
+Si el usuario no propone un proyecto, ir por defecto a back. Si ya está ir a front o e2e.
+
 Lee la spec completa (historias, fuera de alcance, plan técnico, criterios). No implementes lo que esté fuera de alcance. Si falta la spec o el plan técnico es ambiguo, pregunta una duda cada vez.
 
 ## Rama
 
-Desde la rama default (`AGENTS.md`): crea y cambia a `feat/{spec-slug}`. Todo el trabajo ocurre en esa rama.
+Desde la rama default (`AGENTS.md`): crea o cambia a `feat/{spec-slug}`. Todo el trabajo ocurre en esa rama.
 
 ## Orden
 
-Sigue el plan técnico de la spec, proyecto a proyecto, en el orden que indique (habitualmente `back/` → `front/` → `e2e/`). Omite un `{Source_Folder}` si la spec no lo toca.
+Sigue el plan técnico de la spec, o deesarrolla uno sobre la marcha si es necesario.
 
-Antes de tocar un proyecto, lee `.cursor/rules/{Source_Folder}.rules.mdc` y aplícalo. No rediseñes capas ni nombres.
+Antes de tocar el proyecto especificado, lee sus reglas de estilo y arquitectura en `.cursor/rules/{Source_Folder}.rules.mdc` y aplícalo. No rediseñes capas ni nombres.
 
-## Por proyecto
-
-1. Implementa solo lo de esa carpeta.
-2. Proyectos de producción (`back/`, `front/`): tests unitarios colocalizados (`*.test.ts`). Ejecuta `bun test` en esa carpeta. Corrige fallos antes de seguir.
-3. `e2e/`: crea specs y docs de aceptación. **No ejecutes** `bun test:e2e` ni `playwright test`.
-4. Lint básico y formato legible en esa carpeta: `bun run lint:fix` y `bun run format` si existen; en `e2e/` usa `bun lint` y `bun format`.
-5. Commit **solo** los ficheros de ese proyecto. Conventional commits, scope del proyecto: `feat(back): …`, `feat(front): …`, `test(e2e): …`.
-
-No mezcles proyectos en un mismo commit. No hagas push.
+No ejecutes servicios. No pruebes como humano
 
 ## Cierre
 
-Cuando todos los proyectos de la spec estén commiteados: mergea `feat/{spec-slug}` en la rama default y deja el working tree en la default.
+En caso de haber arrancado un progrtama, cierra el programa.
 
-Si el merge falla, no fuerces: informa y espera.
+Si el test falla, no fuerces: informa y espera.
+Asegúrate de hacer commit de los cambios realizados.
+
