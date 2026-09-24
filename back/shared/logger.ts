@@ -2,7 +2,6 @@ import { appendFileSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { LOG_LEVELS, type LogLevel, logLevel as defaultLogLevel, logDir } from "./config.js";
 
-
 export type { LogLevel } from "./config.js";
 
 export interface Logger {
@@ -43,9 +42,10 @@ export const formatLogLine = (
   message: string,
 ): string => {
   const levelColumn = level.toUpperCase().padEnd(LEVEL_WIDTH);
-  const sourceColumn = `${source.trim().slice(0, SOURCE_MAX_LENGTH).padEnd(SOURCE_MAX_LENGTH)}`;
+  const trimmedSource = source.trim().slice(0, SOURCE_MAX_LENGTH);
+  const sourceColumn = `[${trimmedSource}]`.padEnd(SOURCE_MAX_LENGTH + 2);
   const singleLine = message.trim().replaceAll(/\r?\n/gu, String.raw`\n`);
-  return `${formatLogTime(date)} ${sourceColumn} ${levelColumn} ${singleLine}`;
+  return `${formatLogTime(date)} ${levelColumn} ${sourceColumn} ${singleLine}`;
 };
 
 const isEnabled = (level: LogLevel, minLevel: LogLevel): boolean =>
