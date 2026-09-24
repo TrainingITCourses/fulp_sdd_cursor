@@ -1,5 +1,5 @@
 {
-  "name": "astro-bookings-back",
+  "name": "back-express",
   "version": "1.0.0",
   "description": "Back-end Express archetype",
   "author": {
@@ -16,7 +16,6 @@
     "lint": "oxlint --format=agent --quiet",
     "lint:fix": "oxlint --fix --format=agent --quiet",
     "format": "oxfmt --write",
-    "format:check": "oxfmt --check",
     "fix": "bun run lint:fix && bun run format",
     "quality:warnings": "oxlint --deny-warnings --format=agent",
     "quality:complexity": "oxlint -c .oxlintrc.complexity.json --format=agent --quiet",
@@ -31,10 +30,10 @@
     "@types/bun": "^1.4.2",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
-    "@types/node": "^26.6.1",
+    "@types/node": "^26.6.2",
     "oxfmt": "^0.68.0",
-    "oxlint": "^1.83.0",
-    "oxlint-tsgolint": "^7.0.2001",
+    "oxlint": "^1.85.0",
+    "oxlint-tsgolint": "^7.0.2002",
     "typescript": "^7.0.2"
   },
   "engines": {

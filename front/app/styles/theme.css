@@ -129,6 +129,17 @@ header {
   display: none;
 }
 
+#theme-toggle {
+  width: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  box-shadow: none;
+  line-height: inherit;
+}
+
 html[data-theme="light"] #theme-toggle .dark {
   display: inline;
 }

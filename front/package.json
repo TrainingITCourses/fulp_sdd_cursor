@@ -1,12 +1,9 @@
 {
-  "name": "astro-bookings-front",
+  "name": "front-standard",
+  "displayName": "AIDDbot Archetypes",
   "version": "1.0.0",
   "description": "Standard web client — framework-free HTML/CSS/TS.",
-  "author": {
-    "name": "Alberto Basalo",
-    "email": "albertobasalo@aicode.academy",
-    "url": "https://aicode.academy"
-  },
+  "author": "Alberto Basalo from aicode.academy",
   "type": "module",
   "scripts": {
     "dev": "bun --watch server.ts",
@@ -16,7 +13,6 @@
     "lint": "oxlint --format=agent --quiet",
     "lint:fix": "oxlint --fix --format=agent --quiet",
     "format": "oxfmt --write",
-    "format:check": "oxfmt --check",
     "fix": "bun run lint:fix && bun run format",
     "quality:warnings": "oxlint --deny-warnings --format=agent",
     "quality:complexity": "oxlint -c .oxlintrc.complexity.json --format=agent --quiet",
@@ -29,10 +25,10 @@
   "devDependencies": {
     "@types/bun": "^1.4.2",
     "@types/express": "^5.0.6",
-    "@types/node": "^26.6.1",
+    "@types/node": "^26.6.2",
     "oxfmt": "^0.68.0",
-    "oxlint": "^1.83.0",
-    "oxlint-tsgolint": "^7.0.2001",
+    "oxlint": "^1.85.0",
+    "oxlint-tsgolint": "^7.0.2002",
     "typescript": "^7.0.2"
   },
   "engines": {

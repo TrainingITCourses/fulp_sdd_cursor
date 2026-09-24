@@ -90,6 +90,62 @@ void test("persist: true writes updates to localStorage", () => {
   assert.equal(localStorage.getItem("count"), "7");
 });
 
+void test("persist: true removes the key when set to undefined", () => {
+  const store = createStore<number | undefined>("count", INITIAL_COUNT, { persist: true });
+  localStorage.setItem("count", JSON.stringify(TEST_COUNT_SEVEN));
+
+  store.set(undefined);
+
+  assert.equal(localStorage.getItem("count"), null);
+});
+
+void test("a store recreated after clearing reads its initial value without parsing", () => {
+  const store = createStore<number | undefined>("count", INITIAL_COUNT, { persist: true });
+  store.set(undefined);
+  const originalParse = JSON.parse;
+  let parseCalled = false;
+  JSON.parse = (...args: Parameters<typeof JSON.parse>): unknown => {
+    parseCalled = true;
+    return originalParse(...args);
+  };
+
+  try {
+    const recreated = createStore<number | undefined>("count", TEST_COUNT_FIVE, { persist: true });
+    assert.equal(recreated.get(), TEST_COUNT_FIVE);
+    assert.equal(parseCalled, false);
+  } finally {
+    JSON.parse = originalParse;
+  }
+});
+
+void test("persist: true with an empty key never touches localStorage", () => {
+  const store = createStore("", INITIAL_COUNT, { persist: true });
+
+  store.set(TEST_COUNT_SEVEN);
+
+  assert.equal(localStorage.length, 0);
+});
+
+void test("a non-persisted store never touches localStorage", () => {
+  const store = createStore("count", INITIAL_COUNT);
+
+  store.set(TEST_COUNT_SEVEN);
+
+  assert.equal(localStorage.length, 0);
+});
+
+void test("set undefined still notifies subscribers", () => {
+  const store = createStore<number | undefined>("count", INITIAL_COUNT, { persist: true });
+  const seen: (number | undefined)[] = [];
+  store.subscribe((value) => {
+    seen.push(value);
+  });
+
+  store.set(undefined);
+
+  assert.deepEqual(seen, [undefined]);
+});
+
 void test("persist: true keeps the initial value when storage is corrupt", () => {
   localStorage.setItem("count", "{not json");
 

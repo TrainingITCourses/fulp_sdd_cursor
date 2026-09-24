@@ -1,13 +1,14 @@
+import { escapeHtml } from "../core/escape-html.js";
 import "../shared/components/page-header.component.js";
 import { appTitle } from "../shared/global.js";
 
 export const tagName = "ab-home-page";
 
 const demoItems = [
-  { id: "1", name: "Promt" },
-  { id: "2", name: "Context" },
-  { id: "3", name: "Harness" },
-  { id: "4", name: "Loop" },
+  { id: "1", name: "A web app with no more than standards" },
+  { id: "2", name: "A backend API based on Express" },
+  { id: "3", name: "A bun/node CLI" },
+  { id: "4", name: "End to end tested with Playwright" },
 ];
 
 class HomePage extends HTMLElement {
@@ -15,16 +16,20 @@ class HomePage extends HTMLElement {
     const itemLinks = demoItems
       .map(
         ({ id, name }: Readonly<{ id: string; name: string }>) =>
-          `<li><a href="/items/${id}">${name}</a></li>`,
+          `<li><a href="/items/${escapeHtml(id)}">${escapeHtml(name)}</a></li>`,
       )
       .join("");
     this.innerHTML = `
-      <ab-page-header heading="${appTitle}"></ab-page-header>
-      <p>Welcome to Astro-Bookings — book your seat on the next rocket launch.</p>
+      <ab-page-header heading="${escapeHtml(appTitle)}"></ab-page-header>
+      <h3>Build software you can trust with AIDDbot</h3>
       <section>
-        <h2>Engineering</h2>
+        <h2>Archetypes</h2>
         <ul>${itemLinks}</ul>
-      </section>`;
+      </section>
+      <section>
+        <p>You can safely remove this content and start coding your dreams.</p>
+      </section>
+      `;
   }
 }
 

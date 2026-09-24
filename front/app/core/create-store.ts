@@ -25,6 +25,15 @@ function loadPersistedValue<T>(key: string, fallback: T): T {
   }
 }
 
+function persistValue(key: string, value: unknown): void {
+  if (!key) return;
+  if (value === undefined) {
+    localStorage.removeItem(key);
+    return;
+  }
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
 export function createStore<T>(
   key: string,
   initial?: T,
@@ -43,7 +52,7 @@ export function createStore<T>(
     set(next: T): void {
       value = next;
       if (options.persist === true) {
-        localStorage.setItem(key, JSON.stringify(next));
+        persistValue(key, next);
       }
       for (const listener of listeners) {
         listener(next);

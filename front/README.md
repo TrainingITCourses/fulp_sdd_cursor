@@ -1,8 +1,6 @@
-# Astro-Bookings web (`front`)
+# [front-standard](https://github.com/AIDDbot/front-standard)
 
-Standard web client for Astro-Bookings. Scaffolded from the [front-standard](https://github.com/AIDDbot/front-standard) archetype.
-
-Plain HTML, CSS and JS (TypeScript stripped on the fly). No frameworks, no build step, no CDN dependencies.
+Archetype with boilerplate code for a front web app with standard HTML, CSS and JS (TypeScript stripped on the fly). No frameworks, no build step, no CDN dependencies.
 
 ## Quick start
 
@@ -33,8 +31,39 @@ bun dev     # runs in watch mode for development
 bun lint    # runs the linter
 ```
 
+During regular development, run only the unit tests and basic lint checks:
+
+```bash
+bun test
+bun run lint
+```
+
+The `quality:all` script is intended for final validation or when explicitly requested; it does not need to be run after every development change.
+
 > [!IMPORTANT]
-> The client expects the API (the `back` project) on port 3000.
+> The client expects the API (the `back` project) at `http://localhost:3000` by default.
+> Change it with `API_SITE` (default `http://localhost`) and `API_PORT` (default `3000`),
+> or set `API_BASE_URL` to override the whole URL.
+
+The application title is configured with `displayName` in `package.json` (and falls back to the package `name`).
+
+## Rendering untrusted values
+
+Prefer DOM APIs such as `textContent` for dynamic content. When a value must be interpolated into an `innerHTML` template, escape it first with `escapeHtml` from `app/core/escape-html.ts`. Escaping HTML does not validate URLs; validate untrusted links separately before using them in `href` or `src` attributes.
+
+## Logging
+
+- **Server**: `createLogger(source)` from `server/logger.ts` appends to `LOG_DIR/yyyy-mm-dd.log` (default `./logs`) and echoes to the console. Every HTTP request gets one line. Set the minimum level with `LOG_LEVEL` (`debug` | `info` | `warn` | `error`, default `info`).
+- **Browser**: `createLogger(source)` from `app/core/create-logger.ts` writes to the browser console with the same line format. Extra arguments are passed through so objects stay inspectable:
+
+```ts
+import { createLogger } from "../core/create-logger.js";
+
+const logger = createLogger("home");
+logger.info("Items loaded", items);
+```
+
+The default level is `info`. To see `debug` traces, run `localStorage.logLevel = "debug"` in DevTools and reload.
 
 ## Tool stack
 

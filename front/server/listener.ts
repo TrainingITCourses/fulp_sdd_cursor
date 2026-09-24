@@ -3,10 +3,12 @@ import { exec as execCallback } from "node:child_process";
 import { createInterface } from "node:readline/promises";
 import { setTimeout as delay } from "node:timers/promises";
 import { promisify } from "node:util";
+import { createLogger } from "./logger.js";
 
 // oxlint-disable-next-line typescript/strict-void-return
 const exec = promisify(execCallback);
 const RETRY_DELAY_MS = 300;
+const logger = createLogger("server");
 
 interface PortConflict {
   pid: number;
@@ -77,13 +79,11 @@ const confirm = async (question: string): Promise<boolean> => {
 };
 
 const reportPortConflict = (conflict: PortConflict, port: number): void => {
-  process.stderr.write(
-    `Port ${port} is already in use by ${conflict.processName} (PID ${conflict.pid}).\n`,
-  );
+  logger.warn(`Port ${port} is already in use by ${conflict.processName} (PID ${conflict.pid}).`);
 };
 
 const reportPortInUseError = (port: number): void => {
-  process.stderr.write(`Port ${port} is already in use. Stop the process using it and retry.\n`);
+  logger.error(`Port ${port} is already in use. Stop the process using it and retry.`);
   process.exit(1);
 };
 
@@ -107,14 +107,14 @@ const handlePortInUse = async (app: Express, port: number): Promise<void> => {
 
 export const listen = (app: Express, port: number): void => {
   const server = app.listen(port, () => {
-    process.stdout.write(`Serving client at http://localhost:${port}\n`);
+    logger.info(`Serving client at http://localhost:${port}`);
   });
 
   server.on("error", (error: NodeJS.ErrnoException) => {
     if (error.code === "EADDRINUSE") {
       void handlePortInUse(app, port);
     } else {
-      process.stderr.write(`Failed to start server: ${error.message}\n`);
+      logger.error(`Failed to start server: ${error.message}`);
       process.exit(1);
     }
   });

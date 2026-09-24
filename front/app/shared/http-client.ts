@@ -1,31 +1,41 @@
+import { createLogger } from "../core/create-logger.js";
+import { isErrorBody } from "./is-error-body.js";
+
 declare global {
   var API_BASE_URL: string;
 }
 
-const fallbackMessage = (method: string, url: string, response: Response): string =>
-  `${method} ${url} failed: ${response.status} ${response.statusText}`;
+const logger = createLogger("http");
 
-const readApiError = async (response: Response, fallback: string): Promise<string> => {
+/** Reads the `{ error }` body the back error handler always sends on a non-2xx response. */
+const readErrorMessage = async (response: Response): Promise<string | undefined> => {
   try {
-    const payload: unknown = await response.json();
-    if (typeof payload === "object" && payload !== null && "error" in payload) {
-      const message = payload["error"];
-      if (typeof message === "string" && message.length > 0) {
-        return message;
-      }
+    const body: unknown = await response.clone().json();
+    if (isErrorBody(body)) {
+      return body.error;
     }
   } catch {
-    return fallback;
+    // Non-JSON or empty body: fall back to the generic message below.
   }
-  return fallback;
+  return undefined;
 };
 
-const get = async <T>(path: string, headers?: Readonly<Record<string, string>>): Promise<T> => {
-  const url = `${API_BASE_URL}${path}`;
-  const response = await fetch(url, headers ? { headers } : undefined);
-  if (!response.ok) {
-    throw new Error(await readApiError(response, fallbackMessage("GET", url, response)));
+/** Logs and throws when the response is not 2xx; the thrown message is the API's `error` text when present. */
+const ensureOk = async (method: string, url: string, response: Response): Promise<void> => {
+  if (response.ok) {
+    logger.debug(`${method} ${url} ${response.status}`);
+    return;
   }
+  const fallback = `${method} ${url} failed: ${response.status} ${response.statusText}`;
+  const message = (await readErrorMessage(response)) ?? fallback;
+  logger.error(message);
+  throw new Error(message);
+};
+
+const get = async <T>(path: string): Promise<T> => {
+  const url = `${API_BASE_URL}${path}`;
+  const response = await fetch(url);
+  await ensureOk("GET", url, response);
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   return response.json() as Promise<T>;
 };
@@ -37,9 +47,7 @@ const post = async <T>(path: string, body: unknown): Promise<T> => {
     headers: { "Content-Type": "application/json" },
     method: "POST",
   });
-  if (!response.ok) {
-    throw new Error(await readApiError(response, fallbackMessage("POST", url, response)));
-  }
+  await ensureOk("POST", url, response);
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   return response.json() as Promise<T>;
 };

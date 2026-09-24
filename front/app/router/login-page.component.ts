@@ -1,84 +1,73 @@
 import "../shared/components/page-header.component.js";
-import { login, type LoginInput } from "../shared/repositories/login.repository.js";
-import { sessionStore } from "../shared/store/session.store.js";
+import { goTo } from "../shared/navigate.js";
+import { login, type LoginRequest } from "../shared/repositories/auth.repository.js";
+import { authStore } from "../shared/store/auth.store.js";
 
 export const tagName = "ab-login-page";
 
+interface LoginFormFields {
+  email: string;
+  password: string;
+}
+
 class LoginPage extends HTMLElement {
   public connectedCallback(): void {
+    const registered = new URLSearchParams(location.search).get("registered") === "1";
     this.innerHTML = `
-      <ab-page-header heading="Login" subtitle="Sign in to Astro-Bookings."></ab-page-header>
+      <ab-page-header heading="Log in" subtitle="Access your account."></ab-page-header>
+      ${registered ? `<p id="register-confirmation">Registration successful. Please log in.</p>` : ""}
       <form id="login-form">
-        <label>
-          Email
-          <input name="email" type="email" autocomplete="email" required />
-        </label>
-        <label>
-          Password
-          <input name="password" type="password" autocomplete="current-password" required />
-        </label>
-        <button type="submit">Login</button>
+        <label for="login-email">Email</label>
+        <input id="login-email" name="email" type="email" autocomplete="email" required />
+        <label for="login-password">Password</label>
+        <input
+          id="login-password"
+          name="password"
+          type="password"
+          autocomplete="current-password"
+          required
+        />
+        <button type="submit">Log in</button>
       </form>
-      <p id="login-error" role="alert" hidden></p>
-      <p id="login-success" hidden></p>`;
-    this.querySelector("#login-form")?.addEventListener("submit", (event: Event) => {
-      this.#onSubmit(event);
+      <p id="login-error" role="alert"></p>`;
+
+    this.querySelector("#login-form")?.addEventListener("submit", (event: Readonly<Event>) => {
+      event.preventDefault();
+      this.#submit();
     });
   }
 
-  #readField(data: FormData, name: string): string {
-    const value = data.get(name);
-    if (typeof value === "string") return value;
-    return "";
+  #readFields(form: Readonly<HTMLFormElement>): LoginFormFields {
+    return {
+      email: form.querySelector<HTMLInputElement>("#login-email")?.value ?? "",
+      password: form.querySelector<HTMLInputElement>("#login-password")?.value ?? "",
+    };
   }
 
-  #onSubmit(event: Event): void {
-    event.preventDefault();
-    const form = event.currentTarget;
-    if (!(form instanceof HTMLFormElement)) return;
-    const data = new FormData(form);
-    this.#submit({
-      email: this.#readField(data, "email"),
-      password: this.#readField(data, "password"),
-    }).catch(() => {});
+  #submit(): void {
+    const form = this.querySelector<HTMLFormElement>("#login-form");
+    const errorEl = this.querySelector<HTMLElement>("#login-error");
+    if (!form || !errorEl) return;
+    const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+    if (!button || button.disabled) return;
+
+    errorEl.textContent = "";
+    this.#sendLogin(this.#readFields(form), button, errorEl);
   }
 
-  #showError(message: string): void {
-    const errorEl = this.querySelector("#login-error");
-    const successEl = this.querySelector("#login-success");
-    if (successEl instanceof HTMLElement) {
-      successEl.hidden = true;
-    }
-    if (errorEl instanceof HTMLElement) {
-      errorEl.hidden = false;
-      errorEl.textContent = message;
-    }
-  }
-
-  #showSuccess(name: string): void {
-    const errorEl = this.querySelector("#login-error");
-    const successEl = this.querySelector("#login-success");
-    if (errorEl instanceof HTMLElement) {
-      errorEl.hidden = true;
-    }
-    if (successEl instanceof HTMLElement) {
-      successEl.hidden = false;
-      successEl.textContent = `Signed in as ${name}`;
-    }
-  }
-
-  async #submit(input: Readonly<LoginInput>): Promise<void> {
-    try {
-      const result = await login(input);
-      sessionStore.set({
-        token: result.token,
-        user: { email: result.email, id: result.id, name: result.name },
+  #sendLogin(request: Readonly<LoginRequest>, button: HTMLButtonElement, errorEl: HTMLElement): void {
+    button.disabled = true;
+    login(request)
+      .then((session) => {
+        authStore.set(session);
+        goTo("/");
+      })
+      .catch((error: unknown) => {
+        errorEl.textContent = error instanceof Error ? error.message : "Login failed.";
+      })
+      .finally(() => {
+        button.disabled = false;
       });
-      this.#showSuccess(result.name);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Login failed";
-      this.#showError(message);
-    }
   }
 }
 

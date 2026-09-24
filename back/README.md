@@ -1,6 +1,6 @@
-# Astro-Bookings API (`back`)
+# [back-express](https://github.com/AIDDbot/back-express)
 
-Express API for Astro-Bookings. Scaffolded from the [back-express](https://github.com/AIDDbot/back-express) archetype.
+Archetype with boilerplate code for a backend API with express
 
 ## Quick start
 
@@ -30,6 +30,32 @@ bun test    # runs the unit tests
 bun dev     # runs in watch mode for development
 bun lint    # runs the linter
 ```
+
+## Logging
+
+`shared/logger.ts` writes one file per day to `LOG_DIR/yyyy-mm-dd.log` (append only, local time) and echoes each line to the console (`warn`/`error` to stderr).
+
+```text
+14:03:22.481 INFO  [http]       GET /api/health 200 3ms
+14:03:25.002 ERROR [errors]     boom
+```
+
+```ts
+import { createLogger } from "./shared/logger.js";
+const log = createLogger("my-source");
+log.info("something happened");
+```
+
+| Variable    | Default  | Meaning                                         |
+| ----------- | -------- | ----------------------------------------------- |
+| `LOG_DIR`   | `./logs` | Folder for the daily log files                  |
+| `LOG_LEVEL` | `info`   | Minimum level: `debug`, `info`, `warn`, `error` |
+
+## Code quality checks
+
+During regular coding, `bun run lint` is the only required quality check. It runs the basic linter and provides fast feedback while changes are being developed.
+
+The other quality scripts (`quality:warnings`, `quality:complexity`, `quality:coverage`, and `quality:all`) are intended for full audits and solution-hardening work. They do not need to be run for every coding change.
 
 ## Tool stack
 
