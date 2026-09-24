@@ -85,10 +85,12 @@ test.describe("Rockets pages", () => {
 
     const form = new RocketFormPage(page);
     await form.goto();
-    await form.nameInput.fill(uniqueName("before"));
+    const previousName = uniqueName("before");
+    await form.nameInput.fill(previousName);
     await form.rangeSelect.selectOption("earth");
     await form.submitButton.click();
     await expect(page).toHaveURL(/\/rockets\/\d+$/);
+    await expect(page.getByRole("heading", { name: previousName })).toBeVisible();
 
     const detail = new RocketDetailPage(page);
     const nextName = uniqueName("after");
@@ -113,9 +115,12 @@ test.describe("Rockets pages", () => {
 
     const form = new RocketFormPage(page);
     await form.goto();
-    await form.nameInput.fill(uniqueName("retire"));
+    const name = uniqueName("retire");
+    await form.nameInput.fill(name);
     await form.rangeSelect.selectOption("mars");
     await form.submitButton.click();
+    await expect(page).toHaveURL(/\/rockets\/\d+$/);
+    await expect(page.getByRole("heading", { name })).toBeVisible();
 
     const detail = new RocketDetailPage(page);
     await detail.disableButton.click();
