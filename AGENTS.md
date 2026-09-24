@@ -33,17 +33,37 @@ API Express 5 de Astro-Bookings. Capas agrupadas por funcionalidad. Ficheros: `f
 
 - **Ruta fuente**: `back/`
 
+```bash
+cd back
+bun install
+bun test
+bun lint
+```
+
 #### front
 
 Cliente web estándar de Astro-Bookings: HTML, CSS y TypeScript, sin framework ni paso de build. Servidor Express que sirve `app/` (TypeScript al vuelo). Rutas: `/`, `/about`, `/items/:itemId`, 404. Puerto: `4000`. `API_BASE_URL=http://localhost:3000`.
 
 - **Ruta fuente**: `front/`
 
+```bash
+cd front
+bun install
+bun test
+bun lint
+```
+
 #### e2e
 
 Suite Playwright (Chromium). Arranca sola `back` y `front` con `bun start`. Specs: health (API y página) y routing.
 
 - **Ruta fuente**: `e2e/`
+
+```bash
+cd e2e
+bun install
+bun lint
+```
 
 ### Verificación
 
@@ -52,6 +72,8 @@ Desde cada proyecto: `bun install`. Tests unitarios en `back/` y `front/`: `bun 
 Desde `e2e/`, con las apps hermanas en `../back` y `../front` (puertos 3000 y 4000 por defecto):
 
 ```bash
+cd e2e
+bun install
 bun test:e2e
 ```
 
