@@ -60,3 +60,37 @@ test.describe("Client-side routing", () => {
   });
 });
 ```
+
+- Never use `page.waitForTimeout()` -- Use auto-waiting or explicit event waits instead.
+- Always use `test.describe` blocks to group related tests.
+- Use `test.beforeEach` for common setup, but keep it minimal.
+- Tag tests for selective execution:
+```typescript
+   test('checkout flow @smoke @critical', async ({ page }) => { ... });
+   ```
+- Use soft assertions for non-blocking checks:
+```typescript
+   await expect.soft(locator).toHaveText('expected');
+   await expect.soft(other).toBeVisible();
+   ```
+- Parameterize tests with `test.describe` and arrays:
+```typescript
+   const users = [
+     { role: 'admin', canDelete: true },
+     { role: 'viewer', canDelete: false },
+   ];
+   for (const { role, canDelete } of users) {
+     test(`${role} delete permission`, async ({ page }) => { ... });
+   }
+   ```
+- Set reasonable timeouts at the config level, not in individual tests.
+- Use trace viewer for debugging: `npx playwright show-trace trace.zip`
+- Parallelize wisely -- Use `fullyParallel: true` but ensure test isolation.
+- Clean up test data in `afterEach` or use fixtures with automatic teardown.
+
+
+User-centric testing -- Always write tests from the user's perspective. Tests should mirror real user journeys.
+Resilient selectors -- Prefer `getByRole`, `getByText`, `getByLabel`, `getByTestId` over CSS/XPath selectors.
+Auto-waiting -- Leverage Playwright's built-in auto-waiting. Avoid explicit `waitForTimeout`.
+Isolation -- Each test must be independent. Never rely on state from a previous test.
+Readability -- Tests are documentation. Write them so a new team member can understand the intent.

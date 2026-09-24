@@ -31,14 +31,31 @@ Arranque: `bun start` / `bun dev` (`--watch`). Lint `oxlint`, format `oxfmt`. Pu
 ```text
 back/
 ├── server.ts                 # app Express, cors, json, /api, errorHandler, listen
-├── api/api.ts                # apiRouter; registra GET /health
-├── api/health/               # health: controller, service, repository, types
-├── server/config.ts          # PORT, DB_PATH
-├── server/db.ts              # DatabaseSync cacheada
-├── server/errors.ts          # ApiError + errorHandler
-├── server/listener.ts        # listen y conflicto de puerto
-└── shared/type.utils.ts      # parseo/coerción numérica
+├── server/ # Server folder (core utils for the serve)
+├── api/  # Api rest features
+│   ├── endpoint1/
+│   │   ├── endpoint1.controller.ts
+│   │   ├── endpoint1.service.ts
+│   │   ├── endpoint1.repository.ts
+│   │   ├── endpoint1.types.ts
+│   │   └── endpoint1.test.ts
+└── shared/ # Shared folder (utils, types, errors, etc. called from api and server)
+
 ```
+### Dependencias entre carpetas
+
+- `server/` depende de `shared/`
+- `api/` depende de `shared/`
+- `api/` no depende de `server/`
+- `api/` no depende de `api/`
+- `shared/` no depende de nadie
+
+### Dependencias logicas  
+
+- Controladores (api/endpoint1.controller.ts) dependen de servicios (api/endpoint1.service.ts)
+- Servicios (api/endpoint1.service.ts) dependen de repositorios (api/endpoint1.repository.ts)
+- Todos dependen de tipos (api/endpoint1.types.ts)
+
 
 ## Código fuente
 
