@@ -2,6 +2,7 @@ import { ApiError } from "../../shared/errors.js";
 import { isRecord } from "../../shared/guard.utils.js";
 import { createLogger } from "../../shared/logger.js";
 import {
+  deleteBookingIfPlanned,
   findLaunchSeats,
   findSessionUser,
   initBookingsRepository,
@@ -19,6 +20,7 @@ const FIELDS_FORBIDDEN = "Booking id, time, user and launch must not be sent";
 const LAUNCH_MISSING = "Launch not found";
 const NOT_PLANNED = "Launch is not planned";
 const NO_SEATS = "Launch has no free seats";
+const BOOKING_MISSING = "Booking not found";
 
 const FORBIDDEN_FIELDS = ["id", "launchId", "createdAt", "userId", "bookedBy", "bookedByUserId"];
 
@@ -68,10 +70,14 @@ const loadLaunchSeats = (launchId: number): LaunchSeats => {
   return seats;
 };
 
-const assertBookable = (seats: Readonly<LaunchSeats>): void => {
+const assertPlanned = (seats: Readonly<LaunchSeats>): void => {
   if (seats.status !== "planned") {
     throw new ApiError(409, NOT_PLANNED);
   }
+};
+
+const assertBookable = (seats: Readonly<LaunchSeats>): void => {
+  assertPlanned(seats);
   if (seats.taken >= seats.capacity) {
     throw new ApiError(409, NO_SEATS);
   }
@@ -99,6 +105,20 @@ export const createBooking = (launchId: number, body: unknown, authorization: un
   }
   log.info(`Booking created: ${booking.id} on launch ${launchId}`);
   return booking;
+};
+
+export const cancelBooking = (
+  launchId: number,
+  bookingId: number,
+  authorization: unknown,
+): void => {
+  readSessionUser(authorization);
+  assertPlanned(loadLaunchSeats(launchId));
+  if (!deleteBookingIfPlanned(launchId, bookingId)) {
+    assertPlanned(loadLaunchSeats(launchId));
+    throw new ApiError(404, BOOKING_MISSING);
+  }
+  log.info(`Booking deleted: ${bookingId} on launch ${launchId}`);
 };
 
 export const listBookings = (launchId: number, authorization: unknown): LaunchBookings => {

@@ -5,6 +5,7 @@ import { initAuthRepository, insertSession, insertUser } from "../auth/auth.repo
 import { initLaunchesRepository, insertLaunch } from "../launches/launches.repository.js";
 import { initRocketsRepository, insertRocket } from "../rockets/rockets.repository.js";
 import {
+  deleteBookingIfPlanned,
   findLaunchSeats,
   findSessionUser,
   initBookingsRepository,
@@ -102,6 +103,39 @@ void describe("bookings repository", () => {
       undefined,
     );
     assert.strictEqual(listBookingsByLaunch(id).length, 0);
+  });
+
+  void it("deletes the booking row and frees its seat", () => {
+    const id = launchId();
+    const user = userId();
+    const kept = insertBookingIfSeatFree(params(id, user, "2026-09-29T17:00:00.000Z"));
+    const removed = insertBookingIfSeatFree(params(id, user, "2026-09-29T18:00:00.000Z"));
+    assert.ok(kept && removed);
+
+    assert.strictEqual(deleteBookingIfPlanned(id, removed.id), true);
+    assert.deepStrictEqual(
+      listBookingsByLaunch(id).map((booking) => booking.id),
+      [kept.id],
+    );
+    assert.strictEqual(findLaunchSeats(id)?.taken, 1);
+    assert.strictEqual(
+      getDb().prepare("SELECT id FROM bookings WHERE id = ?").get(removed.id),
+      undefined,
+    );
+    assert.strictEqual(deleteBookingIfPlanned(id, removed.id), false);
+  });
+
+  void it("deletes nothing on another launch or when the launch is not planned", () => {
+    const id = launchId();
+    const other = launchId();
+    const user = userId();
+    const booking = insertBookingIfSeatFree(params(id, user, new Date().toISOString()));
+    assert.ok(booking);
+
+    assert.strictEqual(deleteBookingIfPlanned(other, booking.id), false);
+    getDb().prepare("UPDATE launches SET status = 'confirmed' WHERE id = ?").run(id);
+    assert.strictEqual(deleteBookingIfPlanned(id, booking.id), false);
+    assert.strictEqual(listBookingsByLaunch(id).length, 1);
   });
 
   void it("finds the session user id by token", () => {

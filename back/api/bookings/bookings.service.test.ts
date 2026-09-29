@@ -7,7 +7,12 @@ import { insertLaunch } from "../launches/launches.repository.js";
 import { startLaunchesTracking } from "../launches/launches.service.js";
 import { insertRocket } from "../rockets/rockets.repository.js";
 import { startRocketsTracking } from "../rockets/rockets.service.js";
-import { createBooking, listBookings, startBookingsTracking } from "./bookings.service.js";
+import {
+  cancelBooking,
+  createBooking,
+  listBookings,
+  startBookingsTracking,
+} from "./bookings.service.js";
 
 const BAD_REQUEST = 400;
 const UNAUTHORIZED = 401;
@@ -189,5 +194,82 @@ void describe("bookings service", () => {
       );
     }
     assert.strictEqual(listBookings(launchId, bearer().authorization).taken, 0);
+  });
+
+  void it("cancels a booking of a planned launch and frees one seat", () => {
+    const auth = bearer().authorization;
+    const launchId = plannedLaunchId();
+    const kept = createBooking(launchId, passenger, auth);
+    const removed = createBooking(launchId, { ...passenger, name: "Grace" }, auth);
+
+    cancelBooking(launchId, removed.id, bearer().authorization);
+
+    const summary = listBookings(launchId, auth);
+    assert.deepStrictEqual(summary.bookings, [kept]);
+    assert.strictEqual(summary.taken, 1);
+    assert.strictEqual(summary.free, 8);
+  });
+
+  void it("rejects cancelling an unknown launch, an unknown booking or another launch's booking with 404", () => {
+    const auth = bearer().authorization;
+    const launchId = plannedLaunchId();
+    const otherLaunchId = plannedLaunchId();
+    const booking = createBooking(launchId, passenger, auth);
+
+    for (const [launch, bookingId] of [
+      [9_999_999, booking.id],
+      [launchId, 9_999_999],
+      [otherLaunchId, booking.id],
+    ] as const) {
+      assert.throws(
+        () => cancelBooking(launch, bookingId, auth),
+        (error: unknown) => statusOf(error) === NOT_FOUND,
+      );
+    }
+    assert.strictEqual(listBookings(launchId, auth).taken, 1);
+  });
+
+  void it("rejects cancelling on a launch that is not planned with 409", () => {
+    const auth = bearer().authorization;
+    for (const status of ["confirmed", "successful", "cancelled"]) {
+      const launchId = plannedLaunchId();
+      const booking = createBooking(launchId, passenger, auth);
+      getDb().prepare("UPDATE launches SET status = ? WHERE id = ?").run(status, launchId);
+
+      assert.throws(
+        () => cancelBooking(launchId, booking.id, auth),
+        (error: unknown) => statusOf(error) === CONFLICT,
+      );
+      assert.strictEqual(listBookings(launchId, auth).taken, 1);
+    }
+  });
+
+  void it("rejects cancelling without a valid session with 401", () => {
+    const auth = bearer().authorization;
+    const launchId = plannedLaunchId();
+    const booking = createBooking(launchId, passenger, auth);
+
+    for (const authorization of [undefined, "", "Bearer missing", "Token abc"]) {
+      assert.throws(
+        () => cancelBooking(launchId, booking.id, authorization),
+        (error: unknown) => statusOf(error) === UNAUTHORIZED,
+      );
+    }
+    assert.strictEqual(listBookings(launchId, auth).taken, 1);
+  });
+
+  void it("stores no reason, status, time or user of the cancellation", () => {
+    const auth = bearer().authorization;
+    const launchId = plannedLaunchId();
+    const booking = createBooking(launchId, passenger, auth);
+    const columnsBefore = getDb().prepare("PRAGMA table_info(bookings)").all();
+
+    cancelBooking(launchId, booking.id, auth);
+
+    assert.deepStrictEqual(getDb().prepare("PRAGMA table_info(bookings)").all(), columnsBefore);
+    assert.strictEqual(
+      getDb().prepare("SELECT id FROM bookings WHERE id = ?").get(booking.id),
+      undefined,
+    );
   });
 });

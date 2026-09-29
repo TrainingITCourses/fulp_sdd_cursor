@@ -7,7 +7,7 @@ import { insertLaunch } from "../launches/launches.repository.js";
 import { startLaunchesTracking } from "../launches/launches.service.js";
 import { insertRocket } from "../rockets/rockets.repository.js";
 import { startRocketsTracking } from "../rockets/rockets.service.js";
-import { getBookings, postBooking } from "./bookings.controller.js";
+import { deleteBooking, getBookings, postBooking } from "./bookings.controller.js";
 import { startBookingsTracking } from "./bookings.service.js";
 
 const CREATED = 201;
@@ -42,15 +42,18 @@ const plannedLaunchId = (): number => {
   }).id;
 };
 
-const mockRes = (): { statusCode: number; body: unknown; res: Response } => {
-  const captured = { statusCode: 200, body: undefined as unknown };
+const mockRes = (): { statusCode: number; body: unknown; ended: boolean; res: Response } => {
+  const captured = { statusCode: 200, body: undefined as unknown, ended: false };
   const res = {
     json: (data: unknown): void => {
       captured.body = data;
     },
-    status: (code: number): { json: (data: unknown) => void } => {
+    status: (code: number): { json: (data: unknown) => void; end: () => void } => {
       captured.statusCode = code;
       return {
+        end: (): void => {
+          captured.ended = true;
+        },
         json: (data: unknown): void => {
           captured.body = data;
         },
@@ -63,6 +66,9 @@ const mockRes = (): { statusCode: number; body: unknown; res: Response } => {
     },
     get body() {
       return captured.body;
+    },
+    get ended() {
+      return captured.ended;
     },
     res: res as unknown as Response,
   };
@@ -128,6 +134,55 @@ void describe("bookings controller", () => {
     assert.strictEqual(body.taken, 1);
     assert.strictEqual(body.free, 8);
     assert.strictEqual(body.bookings.length, 1);
+  });
+
+  void it("deleteBooking responds 204 without body and frees the seat", () => {
+    const auth = bearer();
+    const launchId = plannedLaunchId();
+    const created = mockRes();
+    postBooking(
+      {
+        body: { email: "ada@example.com", name: "Ada", phone: "600" },
+        header: (): string => auth,
+        params: { launchId: String(launchId) },
+      } as unknown as Request,
+      created.res,
+    );
+    const bookingId = (created.body as { id: number }).id;
+    const deleted = mockRes();
+
+    deleteBooking(
+      {
+        header: (): string => auth,
+        params: { bookingId: String(bookingId), launchId: String(launchId) },
+      } as unknown as Request,
+      deleted.res,
+    );
+
+    assert.strictEqual(deleted.statusCode, 204);
+    assert.strictEqual(deleted.ended, true);
+    assert.strictEqual(deleted.body, undefined);
+    const listed = mockRes();
+    getBookings(
+      { header: (): string => auth, params: { launchId: String(launchId) } } as unknown as Request,
+      listed.res,
+    );
+    const body = listed.body as { free: number; taken: number; bookings: unknown[] };
+    assert.strictEqual(body.free, 9);
+    assert.strictEqual(body.taken, 0);
+    assert.strictEqual(body.bookings.length, 0);
+  });
+
+  void it("deleteBooking rejects a non-numeric booking id with 404", () => {
+    const req = {
+      header: (): string => bearer(),
+      params: { bookingId: "nope", launchId: String(plannedLaunchId()) },
+    };
+
+    assert.throws(
+      () => deleteBooking(req as unknown as Request, mockRes().res),
+      (error: unknown) => statusOf(error) === 404,
+    );
   });
 
   void it("rejects a non-numeric launch id with 404", () => {

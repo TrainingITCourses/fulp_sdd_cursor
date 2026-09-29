@@ -98,6 +98,20 @@ export const insertBookingIfSeatFree = (
   };
 };
 
+/**
+ * Deletes in one statement, so a booking is only removed while its launch is
+ * planned. Returns false when nothing is deleted.
+ */
+export const deleteBookingIfPlanned = (launchId: number, bookingId: number): boolean => {
+  const DELETE = `DELETE FROM bookings
+    WHERE id = ? AND launch_id = ?
+      AND EXISTS (SELECT 1 FROM launches WHERE launches.id = ? AND launches.status = 'planned')`;
+  const result: StatementResultingChanges = getDb()
+    .prepare(DELETE)
+    .run(bookingId, launchId, launchId);
+  return Number(result.changes) > 0;
+};
+
 export const listBookingsByLaunch = (launchId: number): Booking[] => {
   const SELECT = `SELECT id, launch_id, passenger_name, passenger_email, passenger_phone, created_at
     FROM bookings WHERE launch_id = ? ORDER BY created_at ASC, id ASC`;

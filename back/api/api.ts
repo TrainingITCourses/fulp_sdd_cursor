@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { postLogin, postRegister } from "./auth/auth.controller.js";
-import { getBookings, postBooking } from "./bookings/bookings.controller.js";
+import { deleteBooking, getBookings, postBooking } from "./bookings/bookings.controller.js";
 import { getHealth } from "./health/health.controller.js";
 import {
   getLaunchById,
@@ -32,4 +32,5 @@ apiRouter.get("/launches", getLaunches);
 apiRouter.post("/launches/:launchId/cancel", postCancelLaunch);
 apiRouter.post("/launches/:launchId/bookings", postBooking);
 apiRouter.get("/launches/:launchId/bookings", getBookings);
+apiRouter.delete("/launches/:launchId/bookings/:bookingId", deleteBooking);
 apiRouter.get("/launches/:launchId", getLaunchById);
