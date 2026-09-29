@@ -285,3 +285,183 @@ test.describe("Cancel launch API", () => {
     expect(((await found.json()) as Launch).cancellation).toBeNull();
   });
 });
+
+interface Booking {
+  id: number;
+  launchId: number;
+  name: string;
+  email: string;
+  phone: string;
+  createdAt: string;
+}
+
+interface LaunchBookings {
+  capacity: number;
+  taken: number;
+  free: number;
+  bookings: Booking[];
+}
+
+const passenger = (label: string): { name: string; email: string; phone: string } => ({
+  email: `${label}@example.com`,
+  name: `Passenger ${label}`,
+  phone: "+34 600 000 000",
+});
+
+const bookingsUrl = (launchId: number | string): string =>
+  `${BACK_URL}/api/launches/${launchId}/bookings`;
+
+const readBookings = async (
+  request: APIRequestContext,
+  headers: { Authorization: string },
+  launchId: number,
+): Promise<LaunchBookings> => {
+  const listed = await request.get(bookingsUrl(launchId), { headers });
+  expect(listed.status()).toBe(200);
+  return (await listed.json()) as LaunchBookings;
+};
+
+test.describe("Bookings API", () => {
+  test("AC-BKG-01 and AC-BKG-08 book one seat and list the passenger with free seats", async ({
+    request,
+  }) => {
+    const headers = authHeaders(await sessionToken(request));
+    const launch = await planLaunch(request, headers);
+    const empty = await readBookings(request, headers, launch.id);
+    expect(empty).toEqual({ bookings: [], capacity: 9, free: 9, taken: 0 });
+
+    const first = await request.post(bookingsUrl(launch.id), {
+      data: { email: " ada@example.com ", name: "  Ada  ", phone: " 600 111 222 " },
+      headers,
+    });
+    expect(first.status()).toBe(201);
+    const booked = (await first.json()) as Booking;
+    expect(booked).toMatchObject({
+      email: "ada@example.com",
+      launchId: launch.id,
+      name: "Ada",
+      phone: "600 111 222",
+    });
+    expect(booked.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/);
+    const second = await request.post(bookingsUrl(launch.id), {
+      data: passenger("grace"),
+      headers,
+    });
+    expect(second.status()).toBe(201);
+
+    const seats = await readBookings(request, headers, launch.id);
+    expect(seats.capacity).toBe(9);
+    expect(seats.taken).toBe(2);
+    expect(seats.free).toBe(7);
+    expect(seats.bookings.map((booking) => booking.name)).toEqual(["Ada", "Passenger grace"]);
+    expect(seats.bookings[0]).toEqual(booked);
+  });
+
+  test("AC-BKG-02 rejects an empty name, email or phone and an email without @ with 400", async ({
+    request,
+  }) => {
+    const headers = authHeaders(await sessionToken(request));
+    const launch = await planLaunch(request, headers);
+    const valid = passenger("blank");
+    for (const data of [
+      { ...valid, name: "   " },
+      { ...valid, email: "  " },
+      { ...valid, phone: "" },
+      { ...valid, email: "blank.example.com" },
+    ]) {
+      const rejected = await request.post(bookingsUrl(launch.id), { data, headers });
+      expect(rejected.status()).toBe(400);
+    }
+    expect((await readBookings(request, headers, launch.id)).taken).toBe(0);
+  });
+
+  test("AC-BKG-03 rejects an id, a time, a user or a launch id in the body with 400", async ({
+    request,
+  }) => {
+    const headers = authHeaders(await sessionToken(request));
+    const launch = await planLaunch(request, headers);
+    const valid = passenger("extra");
+    for (const extra of [
+      { id: 1 },
+      { createdAt: "2026-09-29T16:00:00.000Z" },
+      { userId: 1 },
+      { launchId: launch.id },
+    ]) {
+      const rejected = await request.post(bookingsUrl(launch.id), {
+        data: { ...valid, ...extra },
+        headers,
+      });
+      expect(rejected.status()).toBe(400);
+    }
+    expect((await readBookings(request, headers, launch.id)).taken).toBe(0);
+  });
+
+  test("AC-BKG-04 responds 404 for an unknown launch", async ({ request }) => {
+    const headers = authHeaders(await sessionToken(request));
+    const created = await request.post(bookingsUrl(999_999), {
+      data: passenger("missing"),
+      headers,
+    });
+    const listed = await request.get(bookingsUrl(999_999), { headers });
+    expect(created.status()).toBe(404);
+    expect(listed.status()).toBe(404);
+  });
+
+  test("AC-BKG-05 rejects a launch that is not planned with 409", async ({ request }) => {
+    const headers = authHeaders(await sessionToken(request));
+    const confirmed = await planLaunch(request, headers);
+    setLaunchStatus(confirmed.id, "confirmed");
+    const cancelled = await planLaunch(request, headers);
+    const cancel = await request.post(`${BACK_URL}/api/launches/${cancelled.id}/cancel`, {
+      data: { causeType: "technical", causeText: "Valve leak" },
+      headers,
+    });
+    expect(cancel.status()).toBe(200);
+
+    for (const launch of [confirmed, cancelled]) {
+      const rejected = await request.post(bookingsUrl(launch.id), {
+        data: passenger("closed"),
+        headers,
+      });
+      expect(rejected.status()).toBe(409);
+      expect((await readBookings(request, headers, launch.id)).taken).toBe(0);
+    }
+  });
+
+  test("AC-BKG-06 rejects booking number 10 with 409 and keeps 9 seats taken", async ({
+    request,
+  }) => {
+    const headers = authHeaders(await sessionToken(request));
+    const launch = await planLaunch(request, headers);
+    for (let seat = 1; seat <= 9; seat += 1) {
+      const booked = await request.post(bookingsUrl(launch.id), {
+        data: passenger(`seat${seat}`),
+        headers,
+      });
+      expect(booked.status()).toBe(201);
+    }
+
+    const tenth = await request.post(bookingsUrl(launch.id), {
+      data: passenger("seat10"),
+      headers,
+    });
+    expect(tenth.status()).toBe(409);
+    const seats = await readBookings(request, headers, launch.id);
+    expect(seats.taken).toBe(9);
+    expect(seats.free).toBe(0);
+  });
+
+  test("AC-BKG-07 rejects booking and listing without a session with 401", async ({ request }) => {
+    const headers = authHeaders(await sessionToken(request));
+    const launch = await planLaunch(request, headers);
+    const created = await request.post(bookingsUrl(launch.id), { data: passenger("anon") });
+    const listed = await request.get(bookingsUrl(launch.id));
+    const forged = await request.get(bookingsUrl(launch.id), {
+      headers: { Authorization: "Bearer not-a-session" },
+    });
+    expect(created.status()).toBe(401);
+    expect(listed.status()).toBe(401);
+    expect(forged.status()).toBe(401);
+    expect((await readBookings(request, headers, launch.id)).taken).toBe(0);
+  });
+});

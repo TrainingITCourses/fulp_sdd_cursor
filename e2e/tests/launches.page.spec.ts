@@ -239,3 +239,109 @@ test.describe("Cancel launch pages", () => {
     await expect(item).not.toContainText(authFixture.users.ada.name);
   });
 });
+
+const bookFromApi = async (
+  request: APIRequestContext,
+  headers: { Authorization: string },
+  launchId: number,
+  label: string,
+): Promise<void> => {
+  const booked = await request.post(
+    `${process.env["E2E_BACK_URL"]}/api/launches/${launchId}/bookings`,
+    {
+      headers,
+      data: { email: `${label}@example.com`, name: `Passenger ${label}`, phone: "+34 600 000 000" },
+    },
+  );
+  expect(booked.status()).toBe(201);
+};
+
+test.describe("Booking pages", () => {
+  test("AC-BKG-09 books a seat from the detail and shows the passenger and free seats", async ({
+    page,
+    request,
+  }) => {
+    await registerAndLogin(page, request, "book");
+    const { id } = await planFromApi(page, request, "book-rocket");
+    const name = uniqueName("Grace");
+    await page.goto(`/launches/${id}`);
+    await expect(page.locator("#launch-free-seats")).toHaveText("9 of 9");
+
+    await page.getByLabel("Passenger name").fill(name);
+    await page.getByLabel("Passenger email").fill("grace@example.com");
+    await page.getByLabel("Passenger phone").fill("+34 600 111 222");
+    await page.getByRole("button", { name: "Book seat" }).click();
+
+    const row = page.getByRole("row").filter({ hasText: name });
+    await expect(row).toContainText("grace@example.com");
+    await expect(row).toContainText("+34 600 111 222");
+    await expect(page.locator("#launch-free-seats")).toHaveText("8 of 9");
+    await expect(page).toHaveURL(new RegExp(`/launches/${id}$`));
+    await expect(page.locator("#booking-form")).toBeVisible();
+  });
+
+  test("AC-BKG-02 keeps an empty passenger off the launch from the detail", async ({
+    page,
+    request,
+  }) => {
+    await registerAndLogin(page, request, "book-empty");
+    const { id } = await planFromApi(page, request, "book-empty-rocket");
+    await page.goto(`/launches/${id}`);
+    await page.getByLabel("Passenger name").fill("   ");
+    await page.getByLabel("Passenger email").fill("grace@example.com");
+    await page.getByLabel("Passenger phone").fill("600");
+    await page.getByRole("button", { name: "Book seat" }).click();
+
+    await expect(page.locator("#booking-error")).not.toBeEmpty();
+    await expect(page.locator("#launch-free-seats")).toHaveText("9 of 9");
+    await expect(page.locator("#launch-passengers")).toHaveCount(0);
+  });
+
+  test("AC-BKG-10 hides the form and says no seats are left when the launch is full", async ({
+    page,
+    request,
+  }) => {
+    await registerAndLogin(page, request, "book-full");
+    const { id, headers } = await planFromApi(page, request, "book-full-rocket");
+    for (let seat = 1; seat <= 9; seat += 1) {
+      await bookFromApi(request, headers, id, `full${seat}`);
+    }
+
+    await page.goto(`/launches/${id}`);
+    await expect(page.locator("#launch-free-seats")).toHaveText("No seats left");
+    await expect(page.getByRole("row").filter({ hasText: "Passenger full9" })).toBeVisible();
+    await expect(page.locator("#booking-form")).toHaveCount(0);
+  });
+
+  test("AC-BKG-11 hides the form but lists passengers when the launch is not planned", async ({
+    page,
+    request,
+  }) => {
+    await registerAndLogin(page, request, "book-closed");
+    const { id, headers } = await planFromApi(page, request, "book-closed-rocket");
+    await bookFromApi(request, headers, id, "closed1");
+    setLaunchStatus(id, "confirmed");
+
+    await page.goto(`/launches/${id}`);
+    await expect(page.locator("#launch-status")).toHaveText("Confirmed");
+    await expect(page.getByRole("row").filter({ hasText: "Passenger closed1" })).toBeVisible();
+    await expect(page.locator("#booking-form")).toHaveCount(0);
+  });
+
+  test("AC-BKG-12 keeps passengers off the launches list", async ({ page, request }) => {
+    await registerAndLogin(page, request, "book-list");
+    const { id, name, headers } = await planFromApi(page, request, "book-list-rocket");
+    const label = uniqueName("listed").replaceAll("-", "");
+    await bookFromApi(request, headers, id, label);
+
+    await page.goto("/launches");
+    const item = page.getByRole("listitem").filter({ hasText: name });
+    await expect(item).toBeVisible();
+    await expect(item).not.toContainText(`Passenger ${label}`);
+  });
+
+  test("AC-BKG-13 sends an anonymous visitor on a detail to login", async ({ page }) => {
+    await page.goto("/launches/1");
+    await expect(page).toHaveURL(/\/login$/);
+  });
+});

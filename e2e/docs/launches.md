@@ -28,3 +28,19 @@ Cancellation is final. The cause type is `economic`, `meteorological`, or `techn
 - AC-CNL-12. The launches page shows status cancelled and does not show the cause, the time, or the user.
 - AC-CNL-13. Opening a detail without a session goes to login (same path as AC-LCH-13).
 - AC-CNL-14. A second cancel does not replace the stored cause, time, or user.
+
+A booking takes one seat on a planned launch for one passenger with a name, an email, and a phone. The capacity is the rocket capacity, always 9. The server records the time and the session user. The detail shows the passengers and the free seats. The list does not show passengers.
+
+- AC-BKG-01. A session books a seat on a planned launch with a non-empty name, email, and phone while seats are free. The booking comes back with an ISO 8601 time.
+- AC-BKG-02. An empty name, email, or phone after trimming, or an email without `@`, is rejected with 400 and does not create a booking. The detail form shows an error and adds no passenger.
+- AC-BKG-03. A body that includes the id, the time, the user, or the launch id is rejected with 400 and does not create a booking.
+- AC-BKG-04. An unknown launch id is rejected with 404.
+- AC-BKG-05. A launch that is not planned is rejected with 409 and does not create a booking.
+- AC-BKG-06. A planned launch with as many bookings as the rocket capacity rejects booking number 10 with 409.
+- AC-BKG-07. A request without a valid session returns 401 and does not create or read bookings.
+- AC-BKG-08. Reading the bookings of a launch returns each passenger with name, email, and phone, ordered by booking time, plus capacity, taken, and free seats. Without bookings, taken is 0 and free is 9.
+- AC-BKG-09. The detail of a planned launch with free seats asks for name, email, and phone, then stays on the detail and shows the passenger and the free seats.
+- AC-BKG-10. The detail of a full planned launch does not show the form and shows the passengers and that no seats are left.
+- AC-BKG-11. The detail of a launch that is not planned does not show the form and shows the booked passengers.
+- AC-BKG-12. The launches page does not show passengers.
+- AC-BKG-13. Opening a detail without a session goes to login (same path as AC-LCH-13).
