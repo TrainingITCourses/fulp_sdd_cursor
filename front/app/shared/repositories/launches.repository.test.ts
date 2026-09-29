@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, test } from "node:test";
 import { authStore } from "../store/auth.store.js";
-import { createLaunch, listLaunches } from "./launches.repository.js";
+import { cancelLaunch, createLaunch, listLaunches } from "./launches.repository.js";
 
 const session = {
   token: "session-token",
@@ -15,6 +15,7 @@ const session = {
 };
 
 const launch = {
+  cancellation: null,
   createdAt: "2026-09-24T00:00:00.000Z",
   id: 4,
   pricePerPassenger: 1200,
@@ -64,5 +65,39 @@ void describe("launches repository", () => {
     assert.equal(created.id, 4);
     assert.equal(created.status, "planned");
     assert.equal(body.includes('"status"'), false);
+  });
+
+  void test("cancels a launch with the session bearer token", async () => {
+    authStore.set(session);
+    globalThis.API_BASE_URL = "http://api.test";
+    const calls: { url: string; authorization: string | null; body: string }[] = [];
+    const cancelled = {
+      ...launch,
+      cancellation: {
+        cancelledAt: "2026-09-29T16:00:00.000Z",
+        cancelledBy: { id: 1, name: "Ada" },
+        causeText: "Valve leak",
+        causeType: "technical" as const,
+      },
+      status: "cancelled" as const,
+    };
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const headers = new Headers(init?.headers);
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+      calls.push({
+        authorization: headers.get("Authorization"),
+        body: typeof init?.body === "string" ? init.body : "",
+        url,
+      });
+      return new Response(JSON.stringify(cancelled), { status: 200 });
+    }) as unknown as typeof fetch;
+
+    const result = await cancelLaunch("4", { causeText: "Valve leak", causeType: "technical" });
+
+    assert.equal(result.status, "cancelled");
+    assert.equal(result.cancellation?.cancelledBy.name, "Ada");
+    assert.equal(calls[0]?.url, "http://api.test/api/launches/4/cancel");
+    assert.equal(calls[0]?.authorization, "Bearer session-token");
+    assert.equal(calls[0]?.body.includes('"causeType":"technical"'), true);
   });
 });
