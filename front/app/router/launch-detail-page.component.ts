@@ -1,6 +1,7 @@
 import { escapeHtml } from "../core/escape-html.js";
 import "../shared/components/page-header.component.js";
 import {
+  cancelBooking,
   createBooking,
   listBookings,
   type LaunchBookings,
@@ -55,6 +56,11 @@ class LaunchDetailPage extends HTMLElement {
       event.preventDefault();
       this.#submitBooking(launch);
     });
+    for (const button of this.querySelectorAll<HTMLButtonElement>("[data-cancel-booking]")) {
+      button.addEventListener("click", () => {
+        this.#cancelBooking(launch, button.dataset["cancelBooking"] ?? "");
+      });
+    }
   }
 
   #showError(error: unknown, errorId: string): void {
@@ -105,6 +111,19 @@ class LaunchDetailPage extends HTMLElement {
       })
       .catch((error: unknown) => {
         this.#showError(error, "booking-error");
+      });
+  }
+
+  #cancelBooking(launch: Readonly<Launch>, bookingId: string): void {
+    const launchId = String(launch.id);
+    cancelBooking(launchId, bookingId)
+      .then(() => listBookings(launchId))
+      .then((seats) => {
+        this.#seats = seats;
+        this.#show(launch);
+      })
+      .catch((error: unknown) => {
+        this.#showError(error, "booking-cancel-error");
       });
   }
 }

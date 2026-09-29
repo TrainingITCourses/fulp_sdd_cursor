@@ -1,4 +1,4 @@
-import { get, post } from "../http-client.js";
+import { get, post, remove } from "../http-client.js";
 
 export interface Booking {
   id: number;
@@ -27,3 +27,6 @@ export const listBookings = (launchId: string): Promise<LaunchBookings> =>
 
 export const createBooking = (launchId: string, body: Readonly<BookingWrite>): Promise<Booking> =>
   post<Booking>(`/api/launches/${launchId}/bookings`, body);
+
+export const cancelBooking = (launchId: string, bookingId: string): Promise<void> =>
+  remove(`/api/launches/${launchId}/bookings/${bookingId}`);

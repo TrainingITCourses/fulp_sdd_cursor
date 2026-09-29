@@ -21,6 +21,8 @@ export const showsCancelForm = (status: Launch["status"]): boolean =>
 export const showsBookingForm = (status: Launch["status"], free: number): boolean =>
   status === "planned" && free > 0;
 
+export const showsCancelBooking = (status: Launch["status"]): boolean => status === "planned";
+
 export interface LaunchDetailView {
   statusLabel: string;
   showForm: boolean;
@@ -81,7 +83,17 @@ const renderCancelForm = (showForm: boolean): string => {
     <p id="cancel-error" role="alert"></p>`;
 };
 
-const renderPassengers = (seats: Readonly<LaunchBookings>): string => {
+const renderCancelBookingCell = (bookingId: number, canCancel: boolean): string => {
+  if (!canCancel) return "";
+  return `
+          <td>
+            <button type="button" class="secondary" data-cancel-booking="${bookingId}">
+              Cancel booking
+            </button>
+          </td>`;
+};
+
+const renderPassengers = (seats: Readonly<LaunchBookings>, canCancel: boolean): string => {
   const freeText = seats.free > 0 ? `${seats.free} of ${seats.capacity}` : "No seats left";
   const rows = seats.bookings
     .map(
@@ -89,21 +101,23 @@ const renderPassengers = (seats: Readonly<LaunchBookings>): string => {
         <tr>
           <td>${escapeHtml(booking.name)}</td>
           <td>${escapeHtml(booking.email)}</td>
-          <td>${escapeHtml(booking.phone)}</td>
+          <td>${escapeHtml(booking.phone)}</td>${renderCancelBookingCell(booking.id, canCancel)}
         </tr>`,
     )
     .join("");
+  const actionHeader = canCancel ? "<th>Actions</th>" : "";
   const table =
     seats.bookings.length === 0
       ? `<p id="launch-no-passengers">No passengers yet.</p>`
       : `
     <table id="launch-passengers">
-      <thead><tr><th>Name</th><th>Email</th><th>Phone</th></tr></thead>
+      <thead><tr><th>Name</th><th>Email</th><th>Phone</th>${actionHeader}</tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
+  const cancelError = canCancel ? `<p id="booking-cancel-error" role="alert"></p>` : "";
   return `
     <h2>Passengers</h2>
-    <p>Free seats: <span id="launch-free-seats">${escapeHtml(freeText)}</span></p>${table}`;
+    <p>Free seats: <span id="launch-free-seats">${escapeHtml(freeText)}</span></p>${table}${cancelError}`;
 };
 
 const renderBookingForm = (showForm: boolean): string => {
@@ -128,6 +142,6 @@ export const renderLaunchDetail = (
 ): string => {
   const view = launchDetailView(launch);
   const bookingForm = renderBookingForm(showsBookingForm(launch.status, seats.free));
-  return `${renderFacts(launch, rocketLabel, view)}${renderCancellation(view)}${renderPassengers(seats)}${bookingForm}${renderCancelForm(view.showForm)}
+  return `${renderFacts(launch, rocketLabel, view)}${renderCancellation(view)}${renderPassengers(seats, showsCancelBooking(launch.status))}${bookingForm}${renderCancelForm(view.showForm)}
     <p><a href="/launches">Back to launches</a></p>`;
 };

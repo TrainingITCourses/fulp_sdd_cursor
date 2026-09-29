@@ -2,7 +2,12 @@ import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import type { LaunchBookings } from "../shared/repositories/bookings.repository.js";
 import type { Launch } from "../shared/repositories/launches.repository.js";
-import { launchDetailView, renderLaunchDetail, showsBookingForm } from "./launch-detail.view.js";
+import {
+  launchDetailView,
+  renderLaunchDetail,
+  showsBookingForm,
+  showsCancelBooking,
+} from "./launch-detail.view.js";
 
 const launch = (status: Launch["status"], cancellation: Launch["cancellation"]): Launch => ({
   cancellation,
@@ -111,6 +116,32 @@ void describe("launch detail view", () => {
       assert.equal(html.includes('id="booking-form"'), false);
       assert.equal(html.includes("P4"), true);
     }
+  });
+
+  void test("shows a cancel booking button on each passenger of a planned launch", () => {
+    assert.equal(showsCancelBooking("planned"), true);
+    const html = renderLaunchDetail(launch("planned", null), "Carrier", seats(2));
+    assert.equal(html.includes('data-cancel-booking="1"'), true);
+    assert.equal(html.includes('data-cancel-booking="2"'), true);
+    assert.equal(html.includes('id="booking-cancel-error"'), true);
+  });
+
+  void test("hides the cancel booking button when the launch is not planned", () => {
+    for (const status of ["confirmed", "successful", "cancelled"] as const) {
+      assert.equal(showsCancelBooking(status), false);
+      const html = renderLaunchDetail(launch(status, null), "Carrier", seats(3));
+      assert.equal(html.includes("data-cancel-booking"), false);
+      assert.equal(html.includes("P3"), true);
+    }
+  });
+
+  void test("shows the booking form again once a full launch frees a seat", () => {
+    const full = renderLaunchDetail(launch("planned", null), "Carrier", seats(9));
+    const freed = renderLaunchDetail(launch("planned", null), "Carrier", seats(8));
+    assert.equal(full.includes('id="booking-form"'), false);
+    assert.equal(freed.includes('id="booking-form"'), true);
+    assert.equal(freed.includes("1 of 9"), true);
+    assert.equal(freed.includes('data-cancel-booking="9"'), false);
   });
 
   void test("escapes passenger data", () => {

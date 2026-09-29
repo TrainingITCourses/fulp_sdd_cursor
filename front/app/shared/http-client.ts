@@ -66,4 +66,10 @@ const post = <T>(path: string, body: unknown): Promise<T> => sendJson<T>("POST",
 
 const patch = <T>(path: string, body: unknown): Promise<T> => sendJson<T>("PATCH", path, body);
 
-export { get, patch, post };
+const remove = async (path: string): Promise<void> => {
+  const url = `${API_BASE_URL}${path}`;
+  const response = await fetch(url, { headers: jsonHeaders(), method: "DELETE" });
+  await ensureOk("DELETE", url, response);
+};
+
+export { get, patch, post, remove };

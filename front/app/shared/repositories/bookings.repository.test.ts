@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, test } from "node:test";
 import { authStore } from "../store/auth.store.js";
-import { createBooking, listBookings } from "./bookings.repository.js";
+import { cancelBooking, createBooking, listBookings } from "./bookings.repository.js";
 
 const session = {
   token: "session-token",
@@ -41,7 +41,8 @@ const stubFetch = (status: number, payload: unknown): Call[] => {
       method: init?.method ?? "GET",
       url,
     });
-    return new Response(JSON.stringify(payload), { status });
+    const body = status === 204 ? null : JSON.stringify(payload);
+    return new Response(body, { status });
   }) as unknown as typeof fetch;
   return calls;
 };
@@ -96,5 +97,26 @@ void describe("bookings repository", () => {
       createBooking("4", { email: "a@b.c", name: "A", phone: "1" }),
       /Launch has no free seats/,
     );
+  });
+
+  void test("cancels a booking with DELETE and the session bearer token", async () => {
+    authStore.set(session);
+    globalThis.API_BASE_URL = "http://api.test";
+    const calls = stubFetch(204, undefined);
+
+    await cancelBooking("4", "3");
+
+    assert.equal(calls[0]?.url, "http://api.test/api/launches/4/bookings/3");
+    assert.equal(calls[0]?.method, "DELETE");
+    assert.equal(calls[0]?.authorization, "Bearer session-token");
+    assert.equal(calls[0]?.body, "");
+  });
+
+  void test("rejects a cancellation with the API error message", async () => {
+    authStore.set(session);
+    globalThis.API_BASE_URL = "http://api.test";
+    stubFetch(409, { error: "Launch is not planned" });
+
+    await assert.rejects(cancelBooking("4", "3"), /Launch is not planned/);
   });
 });
