@@ -2,6 +2,7 @@ import cors from "cors";
 import express from "express";
 import { apiRouter } from "./api/api.js";
 import { startAuthTracking } from "./api/auth/auth.service.js";
+import { startBookingsTracking } from "./api/bookings/bookings.service.js";
 import { startHealthTracking } from "./api/health/health.service.js";
 import { startLaunchesTracking } from "./api/launches/launches.service.js";
 import { startRocketsTracking } from "./api/rockets/rockets.service.js";
@@ -27,6 +28,7 @@ try {
   startAuthTracking();
   startRocketsTracking();
   startLaunchesTracking();
+  startBookingsTracking();
   listen(app, port);
 } catch (error) {
   createLogger("server").error(error instanceof Error ? error.message : String(error));
