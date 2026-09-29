@@ -1,4 +1,5 @@
 import { escapeHtml } from "../core/escape-html.js";
+import type { LaunchBookings } from "../shared/repositories/bookings.repository.js";
 import type { CancellationCauseType, Launch } from "../shared/repositories/launches.repository.js";
 
 export const CAUSE_LABEL: Record<CancellationCauseType, string> = {
@@ -16,6 +17,9 @@ const STATUS_LABEL: Record<Launch["status"], string> = {
 
 export const showsCancelForm = (status: Launch["status"]): boolean =>
   status === "planned" || status === "confirmed";
+
+export const showsBookingForm = (status: Launch["status"], free: number): boolean =>
+  status === "planned" && free > 0;
 
 export interface LaunchDetailView {
   statusLabel: string;
@@ -77,8 +81,53 @@ const renderCancelForm = (showForm: boolean): string => {
     <p id="cancel-error" role="alert"></p>`;
 };
 
-export const renderLaunchDetail = (launch: Readonly<Launch>, rocketLabel: string): string => {
+const renderPassengers = (seats: Readonly<LaunchBookings>): string => {
+  const freeText = seats.free > 0 ? `${seats.free} of ${seats.capacity}` : "No seats left";
+  const rows = seats.bookings
+    .map(
+      (booking) => `
+        <tr>
+          <td>${escapeHtml(booking.name)}</td>
+          <td>${escapeHtml(booking.email)}</td>
+          <td>${escapeHtml(booking.phone)}</td>
+        </tr>`,
+    )
+    .join("");
+  const table =
+    seats.bookings.length === 0
+      ? `<p id="launch-no-passengers">No passengers yet.</p>`
+      : `
+    <table id="launch-passengers">
+      <thead><tr><th>Name</th><th>Email</th><th>Phone</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  return `
+    <h2>Passengers</h2>
+    <p>Free seats: <span id="launch-free-seats">${escapeHtml(freeText)}</span></p>${table}`;
+};
+
+const renderBookingForm = (showForm: boolean): string => {
+  if (!showForm) return "";
+  return `
+    <form id="booking-form">
+      <label for="booking-name">Passenger name</label>
+      <input id="booking-name" name="name" required />
+      <label for="booking-email">Passenger email</label>
+      <input id="booking-email" name="email" type="email" required />
+      <label for="booking-phone">Passenger phone</label>
+      <input id="booking-phone" name="phone" type="tel" required />
+      <button type="submit">Book seat</button>
+    </form>
+    <p id="booking-error" role="alert"></p>`;
+};
+
+export const renderLaunchDetail = (
+  launch: Readonly<Launch>,
+  rocketLabel: string,
+  seats: Readonly<LaunchBookings>,
+): string => {
   const view = launchDetailView(launch);
-  return `${renderFacts(launch, rocketLabel, view)}${renderCancellation(view)}${renderCancelForm(view.showForm)}
+  const bookingForm = renderBookingForm(showsBookingForm(launch.status, seats.free));
+  return `${renderFacts(launch, rocketLabel, view)}${renderCancellation(view)}${renderPassengers(seats)}${bookingForm}${renderCancelForm(view.showForm)}
     <p><a href="/launches">Back to launches</a></p>`;
 };
