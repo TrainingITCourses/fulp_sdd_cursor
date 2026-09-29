@@ -27,7 +27,7 @@ status: {status GREEN o RED}
 ## Errores
 ```
 
-Si las pruebas pasan, informa GREEN y termina.
-Si las pruebas fallan, informa RED y termina.
+Si las pruebas pasan, informa GREEN y termina escribiendo una línea en el journal con el status `INFO` y el resumen `Pruebas e2e {spec-slug} pasan`.
+Si las pruebas fallan, informa RED y termina escribiendo una línea en el journal con el status `ERROR` y el resumen `Pruebas e2e {spec-slug} fallan`.
 
 

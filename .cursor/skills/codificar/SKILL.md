@@ -9,7 +9,9 @@ disable-model-invocation: false
 Tu objetivo es implementar la funcionalidad de una spec en una capa física (back, o front o e2e)
 
 Debe recibir la spec y la rama. 
-Crear o reutilizar un rama `feat/spec-slug` y codificar en ella. 
+
+Ejecuta `node .cursor/skills/codificar/scripts/git-branch.mjs {spec-slug}` desde la raíz del repo y espera a que termine. Codifica en la rama que imprima. 
+
 Ir al proyecto especificado y codificar. 
 Asegurar un lint básico y un formato legible. 
 Comitear al terminar. 
@@ -41,4 +43,8 @@ En caso de haber arrancado un progrtama, cierra el programa.
 
 Si el test falla, no fuerces: informa y espera.
 Asegúrate de hacer commit de los cambios realizados.
+
+Si todo va bien, escribe una línea en el journal con el status `INFO` y el resumen `Codificado {spec-slug} en {Source_Folder}`.
+
+Si sale algún problema, escribe una línea en el journal con el status `ERROR` y el resumen `Error al codificar {spec-slug} en {Source_Folder}`.
 
