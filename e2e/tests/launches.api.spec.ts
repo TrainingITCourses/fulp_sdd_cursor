@@ -1,6 +1,7 @@
 import { type APIRequestContext, expect, test } from "@playwright/test";
 import authFixture from "./fixtures/auth.json" with { type: "json" };
 import { uniqueEmail } from "./fixtures/test-data.js";
+import { bookingColumns, bookingRowExists } from "./support/read-bookings-table.js";
 import { setLaunchStatus } from "./support/set-launch-status.js";
 
 const BACK_URL = process.env["E2E_BACK_URL"];
@@ -463,5 +464,132 @@ test.describe("Bookings API", () => {
     expect(listed.status()).toBe(401);
     expect(forged.status()).toBe(401);
     expect((await readBookings(request, headers, launch.id)).taken).toBe(0);
+  });
+});
+
+const BOOKING_COLUMNS = [
+  "booked_by_user_id",
+  "created_at",
+  "id",
+  "launch_id",
+  "passenger_email",
+  "passenger_name",
+  "passenger_phone",
+];
+
+const bookSeat = async (
+  request: APIRequestContext,
+  headers: { Authorization: string },
+  launchId: number,
+  label: string,
+): Promise<Booking> => {
+  const booked = await request.post(bookingsUrl(launchId), { data: passenger(label), headers });
+  expect(booked.status()).toBe(201);
+  return (await booked.json()) as Booking;
+};
+
+const bookingUrl = (launchId: number | string, bookingId: number | string): string =>
+  `${bookingsUrl(launchId)}/${bookingId}`;
+
+test.describe("Cancel booking API", () => {
+  test("AC-CBK-01 and AC-CBK-02 delete a booking with 204 and free its seat", async ({
+    request,
+  }) => {
+    const headers = authHeaders(await sessionToken(request));
+    const other = authHeaders(await sessionToken(request));
+    const launch = await planLaunch(request, headers);
+    const kept = await bookSeat(request, headers, launch.id, "kept");
+    const removed = await bookSeat(request, headers, launch.id, "removed");
+    expect((await readBookings(request, headers, launch.id)).free).toBe(7);
+
+    const deleted = await request.delete(bookingUrl(launch.id, removed.id), { headers: other });
+    expect(deleted.status()).toBe(204);
+    expect(await deleted.text()).toBe("");
+
+    const seats = await readBookings(request, headers, launch.id);
+    expect(seats.bookings).toEqual([kept]);
+    expect(seats.taken).toBe(1);
+    expect(seats.free).toBe(8);
+  });
+
+  test("AC-CBK-03 responds 404 for an unknown launch, an unknown booking or another launch's booking", async ({
+    request,
+  }) => {
+    const headers = authHeaders(await sessionToken(request));
+    const launch = await planLaunch(request, headers);
+    const otherLaunch = await planLaunch(request, headers);
+    const booking = await bookSeat(request, headers, launch.id, "lost");
+
+    for (const url of [
+      bookingUrl(999_999, booking.id),
+      bookingUrl(launch.id, 999_999),
+      bookingUrl(otherLaunch.id, booking.id),
+    ]) {
+      const missing = await request.delete(url, { headers });
+      expect(missing.status()).toBe(404);
+    }
+    expect((await readBookings(request, headers, launch.id)).bookings).toEqual([booking]);
+  });
+
+  test("AC-CBK-04 rejects a launch that is not planned with 409 and keeps the booking", async ({
+    request,
+  }) => {
+    const headers = authHeaders(await sessionToken(request));
+    const confirmed = await planLaunch(request, headers);
+    const confirmedBooking = await bookSeat(request, headers, confirmed.id, "confirmed");
+    setLaunchStatus(confirmed.id, "confirmed");
+    const successful = await planLaunch(request, headers);
+    const successfulBooking = await bookSeat(request, headers, successful.id, "successful");
+    setLaunchStatus(successful.id, "successful");
+    const cancelled = await planLaunch(request, headers);
+    const cancelledBooking = await bookSeat(request, headers, cancelled.id, "cancelled");
+    const cancel = await request.post(`${BACK_URL}/api/launches/${cancelled.id}/cancel`, {
+      data: { causeType: "technical", causeText: "Valve leak" },
+      headers,
+    });
+    expect(cancel.status()).toBe(200);
+
+    for (const [launch, booking] of [
+      [confirmed, confirmedBooking],
+      [successful, successfulBooking],
+      [cancelled, cancelledBooking],
+    ] as const) {
+      const rejected = await request.delete(bookingUrl(launch.id, booking.id), { headers });
+      expect(rejected.status()).toBe(409);
+      expect((await readBookings(request, headers, launch.id)).bookings).toEqual([booking]);
+    }
+  });
+
+  test("AC-CBK-05 rejects a cancel without a valid session with 401 and keeps the booking", async ({
+    request,
+  }) => {
+    const headers = authHeaders(await sessionToken(request));
+    const launch = await planLaunch(request, headers);
+    const booking = await bookSeat(request, headers, launch.id, "anon");
+
+    const anonymous = await request.delete(bookingUrl(launch.id, booking.id));
+    const forged = await request.delete(bookingUrl(launch.id, booking.id), {
+      headers: { Authorization: "Bearer not-a-session" },
+    });
+    expect(anonymous.status()).toBe(401);
+    expect(forged.status()).toBe(401);
+    expect((await readBookings(request, headers, launch.id)).bookings).toEqual([booking]);
+  });
+
+  test("AC-CBK-10 removes the row without storing a reason, a status, a time or a user", async ({
+    request,
+  }) => {
+    const headers = authHeaders(await sessionToken(request));
+    const launch = await planLaunch(request, headers);
+    const booking = await bookSeat(request, headers, launch.id, "gone");
+    expect(bookingColumns()).toEqual(BOOKING_COLUMNS);
+
+    const deleted = await request.delete(bookingUrl(launch.id, booking.id), { headers });
+    expect(deleted.status()).toBe(204);
+
+    expect(bookingRowExists(booking.id)).toBe(false);
+    expect(bookingColumns()).toEqual(BOOKING_COLUMNS);
+    const again = await request.delete(bookingUrl(launch.id, booking.id), { headers });
+    expect(again.status()).toBe(404);
   });
 });

@@ -44,3 +44,16 @@ A booking takes one seat on a planned launch for one passenger with a name, an e
 - AC-BKG-11. The detail of a launch that is not planned does not show the form and shows the booked passengers.
 - AC-BKG-12. The launches page does not show passengers.
 - AC-BKG-13. Opening a detail without a session goes to login (same path as AC-LCH-13).
+
+Cancelling a booking deletes it and frees its seat. Only bookings of a planned launch can be cancelled. Any session can cancel any booking. Nothing is stored about the cancellation.
+
+- AC-CBK-01. A session cancels a booking of a planned launch with `DELETE /api/launches/:launchId/bookings/:bookingId`. The booking is deleted and the response is 204 without a body.
+- AC-CBK-02. After a cancel, reading the bookings of the launch does not return the booking and counts one more free seat.
+- AC-CBK-03. An unknown launch, an unknown booking, or a booking of another launch is rejected with 404.
+- AC-CBK-04. A launch that is not planned is rejected with 409 and keeps the booking.
+- AC-CBK-05. A request without a valid session returns 401 and keeps the booking.
+- AC-CBK-06. The detail of a planned launch shows a cancel action on each passenger.
+- AC-CBK-07. Cancelling from the detail stays on the detail, removes the passenger, and shows the updated free seats. The booking form comes back when a full launch frees a seat.
+- AC-CBK-08. The detail of a launch that is not planned does not show the cancel action.
+- AC-CBK-09. Opening a detail without a session goes to login (same path as AC-LCH-13).
+- AC-CBK-10. A cancel does not store a reason, a cancelled status, a time, or a user: the booking row is gone and the bookings table keeps its columns.

@@ -345,3 +345,81 @@ test.describe("Booking pages", () => {
     await expect(page).toHaveURL(/\/login$/);
   });
 });
+
+test.describe("Cancel booking pages", () => {
+  test("AC-CBK-06 shows a cancel action on each passenger of a planned launch", async ({
+    page,
+    request,
+  }) => {
+    await registerAndLogin(page, request, "unbook-list");
+    const { id, headers } = await planFromApi(page, request, "unbook-list-rocket");
+    await bookFromApi(request, headers, id, "unbook1");
+    await bookFromApi(request, headers, id, "unbook2");
+
+    await page.goto(`/launches/${id}`);
+    for (const label of ["unbook1", "unbook2"]) {
+      const row = page.getByRole("row").filter({ hasText: `Passenger ${label}` });
+      await expect(row.getByRole("button", { name: "Cancel booking" })).toBeVisible();
+    }
+  });
+
+  test("AC-CBK-07 cancels a booking from the detail and shows the freed seat", async ({
+    page,
+    request,
+  }) => {
+    await registerAndLogin(page, request, "unbook");
+    const { id, headers } = await planFromApi(page, request, "unbook-rocket");
+    await bookFromApi(request, headers, id, "keep");
+    await bookFromApi(request, headers, id, "drop");
+    await page.goto(`/launches/${id}`);
+    await expect(page.locator("#launch-free-seats")).toHaveText("7 of 9");
+
+    const row = page.getByRole("row").filter({ hasText: "Passenger drop" });
+    await row.getByRole("button", { name: "Cancel booking" }).click();
+
+    await expect(page.getByRole("row").filter({ hasText: "Passenger drop" })).toHaveCount(0);
+    await expect(page.getByRole("row").filter({ hasText: "Passenger keep" })).toBeVisible();
+    await expect(page.locator("#launch-free-seats")).toHaveText("8 of 9");
+    await expect(page).toHaveURL(new RegExp(`/launches/${id}$`));
+  });
+
+  test("AC-CBK-07 shows the booking form again after freeing a seat on a full launch", async ({
+    page,
+    request,
+  }) => {
+    await registerAndLogin(page, request, "unbook-full");
+    const { id, headers } = await planFromApi(page, request, "unbook-full-rocket");
+    for (let seat = 1; seat <= 9; seat += 1) {
+      await bookFromApi(request, headers, id, `seat${seat}`);
+    }
+    await page.goto(`/launches/${id}`);
+    await expect(page.locator("#launch-free-seats")).toHaveText("No seats left");
+    await expect(page.locator("#booking-form")).toHaveCount(0);
+
+    const row = page.getByRole("row").filter({ hasText: "Passenger seat9" });
+    await row.getByRole("button", { name: "Cancel booking" }).click();
+
+    await expect(page.locator("#launch-free-seats")).toHaveText("1 of 9");
+    await expect(page.locator("#booking-form")).toBeVisible();
+  });
+
+  test("AC-CBK-08 hides the cancel action when the launch is not planned", async ({
+    page,
+    request,
+  }) => {
+    await registerAndLogin(page, request, "unbook-closed");
+    const { id, headers } = await planFromApi(page, request, "unbook-closed-rocket");
+    await bookFromApi(request, headers, id, "locked");
+    setLaunchStatus(id, "confirmed");
+
+    await page.goto(`/launches/${id}`);
+    await expect(page.locator("#launch-status")).toHaveText("Confirmed");
+    await expect(page.getByRole("row").filter({ hasText: "Passenger locked" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Cancel booking" })).toHaveCount(0);
+  });
+
+  test("AC-CBK-09 sends an anonymous visitor on a detail to login", async ({ page }) => {
+    await page.goto("/launches/1");
+    await expect(page).toHaveURL(/\/login$/);
+  });
+});
