@@ -1,7 +1,12 @@
 import { Router } from "express";
 import { postLogin, postRegister } from "./auth/auth.controller.js";
 import { getHealth } from "./health/health.controller.js";
-import { getLaunchById, getLaunches, postLaunch } from "./launches/launches.controller.js";
+import {
+  getLaunchById,
+  getLaunches,
+  postCancelLaunch,
+  postLaunch,
+} from "./launches/launches.controller.js";
 import {
   getRocketById,
   getRockets,
@@ -23,4 +28,5 @@ apiRouter.patch("/rockets/:rocketId", patchRocket);
 apiRouter.post("/rockets/:rocketId/disable", postDisableRocket);
 apiRouter.post("/launches", postLaunch);
 apiRouter.get("/launches", getLaunches);
+apiRouter.post("/launches/:launchId/cancel", postCancelLaunch);
 apiRouter.get("/launches/:launchId", getLaunchById);

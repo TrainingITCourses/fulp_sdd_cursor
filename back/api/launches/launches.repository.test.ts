@@ -1,10 +1,13 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
+import { getDb } from "../../server/db.js";
 import { initAuthRepository, insertSession, insertUser } from "../auth/auth.repository.js";
 import { initRocketsRepository, insertRocket } from "../rockets/rockets.repository.js";
 import {
+  cancelLaunchRecord,
   findLaunchById,
   findRocketAvailability,
+  findSessionUser,
   initLaunchesRepository,
   insertLaunch,
   listLaunches,
@@ -75,5 +78,60 @@ void describe("launches repository", () => {
     insertSession({ token, userId: user.id });
     assert.strictEqual(sessionExists(token), true);
     assert.strictEqual(sessionExists("missing-token"), false);
+    assert.strictEqual(findSessionUser(token)?.name, "Ada");
+    assert.strictEqual(findSessionUser("missing-token"), undefined);
+  });
+
+  void it("stores one cancellation on a planned or confirmed launch", () => {
+    const user = insertUser({
+      email: `${uniqueName("user")}@example.com`,
+      name: "Ada",
+      passwordHash: "hash",
+      role: "user",
+    });
+    const planned = insertLaunch({
+      pricePerPassenger: 10,
+      rocketId: rocketId(),
+      scheduledAt: futureIso(86_400_000),
+    });
+    const confirmed = insertLaunch({
+      pricePerPassenger: 11,
+      rocketId: rocketId(),
+      scheduledAt: futureIso(90_000_000),
+    });
+    getDb().prepare("UPDATE launches SET status = 'confirmed' WHERE id = ?").run(confirmed.id);
+    const cancelledAt = "2026-09-29T16:00:00.000Z";
+
+    cancelLaunchRecord({
+      cancelledAt,
+      cancelledByUserId: user.id,
+      causeText: "Storm over the pad",
+      causeType: "meteorological",
+      id: planned.id,
+    });
+    cancelLaunchRecord({
+      cancelledAt,
+      cancelledByUserId: user.id,
+      causeText: "Budget cut",
+      causeType: "economic",
+      id: confirmed.id,
+    });
+
+    const stored = findLaunchById(planned.id);
+    assert.strictEqual(stored?.status, "cancelled");
+    assert.strictEqual(stored?.cancellationCauseType, "meteorological");
+    assert.strictEqual(stored?.cancellationCauseText, "Storm over the pad");
+    assert.strictEqual(stored?.cancelledAt, cancelledAt);
+    assert.strictEqual(stored?.cancelledByUserId, user.id);
+    assert.strictEqual(stored?.cancelledByName, "Ada");
+    assert.strictEqual(findLaunchById(confirmed.id)?.cancellationCauseType, "economic");
+    assert.strictEqual(
+      insertLaunch({
+        pricePerPassenger: 12,
+        rocketId: rocketId(),
+        scheduledAt: futureIso(95_000_000),
+      }).cancellationCauseType,
+      null,
+    );
   });
 });

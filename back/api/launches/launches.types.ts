@@ -2,7 +2,24 @@ export const LAUNCH_STATUSES = ["planned", "confirmed", "successful", "cancelled
 
 export type LaunchStatus = (typeof LAUNCH_STATUSES)[number];
 
-/** Wire format of a launch. This delivery only creates status planned. */
+export const CANCELLATION_CAUSE_TYPES = ["economic", "meteorological", "technical"] as const;
+
+export type CancellationCauseType = (typeof CANCELLATION_CAUSE_TYPES)[number];
+
+export interface CancellationActor {
+  id: number;
+  name: string;
+}
+
+/** Recorded once, when a launch is cancelled. */
+export interface Cancellation {
+  causeType: CancellationCauseType;
+  causeText: string;
+  cancelledAt: string;
+  cancelledBy: CancellationActor;
+}
+
+/** Wire format of a launch. `cancellation` is null until the launch is cancelled. */
 export interface Launch {
   id: number;
   rocketId: number;
@@ -10,6 +27,7 @@ export interface Launch {
   pricePerPassenger: number;
   status: LaunchStatus;
   createdAt: string;
+  cancellation: Cancellation | null;
 }
 
 export interface LaunchRecord {
@@ -19,12 +37,30 @@ export interface LaunchRecord {
   pricePerPassenger: number;
   status: string;
   createdAt: string;
+  cancellationCauseType: string | null;
+  cancellationCauseText: string | null;
+  cancelledAt: string | null;
+  cancelledByUserId: number | null;
+  cancelledByName: string | null;
 }
 
 export interface InsertLaunchParams {
   rocketId: number;
   scheduledAt: string;
   pricePerPassenger: number;
+}
+
+export interface CancelLaunchParams {
+  id: number;
+  causeType: string;
+  causeText: string;
+  cancelledAt: string;
+  cancelledByUserId: number;
+}
+
+export interface SessionUser {
+  id: number;
+  name: string;
 }
 
 export interface RocketAvailability {

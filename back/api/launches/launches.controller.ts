@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import { ApiError } from "../../shared/errors.js";
 import { createLogger } from "../../shared/logger.js";
 import { coerceToFiniteNumber } from "../../shared/type.utils.js";
-import { createLaunch, getLaunch, listLaunches } from "./launches.service.js";
+import { cancelLaunch, createLaunch, getLaunch, listLaunches } from "./launches.service.js";
 
 const CREATED = 201;
 const log = createLogger("launches");
@@ -29,4 +29,9 @@ export const getLaunches = (req: Readonly<Request>, res: Readonly<Response>): vo
 
 export const getLaunchById = (req: Readonly<Request>, res: Readonly<Response>): void => {
   res.json(getLaunch(launchIdOf(req), authorizationOf(req)));
+};
+
+export const postCancelLaunch = (req: Readonly<Request>, res: Readonly<Response>): void => {
+  const launch = cancelLaunch(launchIdOf(req), req.body, authorizationOf(req));
+  res.json(launch);
 };

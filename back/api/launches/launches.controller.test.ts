@@ -5,7 +5,7 @@ import { insertSession, insertUser } from "../auth/auth.repository.js";
 import { startAuthTracking } from "../auth/auth.service.js";
 import { insertRocket } from "../rockets/rockets.repository.js";
 import { startRocketsTracking } from "../rockets/rockets.service.js";
-import { getLaunchById, getLaunches, postLaunch } from "./launches.controller.js";
+import { getLaunchById, getLaunches, postCancelLaunch, postLaunch } from "./launches.controller.js";
 import { startLaunchesTracking } from "./launches.service.js";
 
 const CREATED = 201;
@@ -110,5 +110,41 @@ void describe("launches controller", () => {
       (error: unknown) =>
         error instanceof Error && "status" in error && (error as { status: number }).status === 404,
     );
+  });
+
+  void it("postCancelLaunch responds 200 with the cancellation", () => {
+    const auth = bearer();
+    const created = mockRes();
+    postLaunch(
+      {
+        body: {
+          pricePerPassenger: 40,
+          rocketId: rocketId(),
+          scheduledAt: new Date(Date.now() + 86_400_000).toISOString(),
+        },
+        header: (): string => auth,
+      } as unknown as Request,
+      created.res,
+    );
+    const launchId = (created.body as { id: number }).id;
+    const cancelled = mockRes();
+
+    postCancelLaunch(
+      {
+        body: { causeText: "Range closed", causeType: "technical" },
+        header: (): string => auth,
+        params: { launchId: String(launchId) },
+      } as unknown as Request,
+      cancelled.res,
+    );
+
+    assert.strictEqual(cancelled.statusCode, 200);
+    const body = cancelled.body as {
+      status: string;
+      cancellation: { causeText: string; cancelledBy: { name: string } };
+    };
+    assert.strictEqual(body.status, "cancelled");
+    assert.strictEqual(body.cancellation.causeText, "Range closed");
+    assert.strictEqual(body.cancellation.cancelledBy.name, "Ada");
   });
 });
