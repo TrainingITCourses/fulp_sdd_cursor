@@ -2,6 +2,7 @@ import { type APIRequestContext, expect, type Page, test } from "@playwright/tes
 import authFixture from "./fixtures/auth.json" with { type: "json" };
 import { uniqueEmail } from "./fixtures/test-data.js";
 import { LoginPage } from "./pages/auth.page.js";
+import { setLaunchStatus } from "./support/set-launch-status.js";
 
 const uniqueName = (label: string): string =>
   `${label}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -138,5 +139,103 @@ test.describe("Launches pages", () => {
     await page.getByRole("button", { name: "Plan launch" }).click();
     await expect(page.getByRole("alert")).toHaveText("Choose a future date.");
     await expect(page).toHaveURL(/\/launches\/new$/);
+  });
+});
+
+const planFromApi = async (
+  page: Page,
+  request: APIRequestContext,
+  label: string,
+): Promise<{ id: number; name: string; headers: { Authorization: string } }> => {
+  const headers = { Authorization: `Bearer ${await browserToken(page)}` };
+  const name = uniqueName(label);
+  const rocket = await request.post(`${process.env["E2E_BACK_URL"]}/api/rockets`, {
+    headers,
+    data: { name, range: "earth" },
+  });
+  expect(rocket.status()).toBe(201);
+  const rocketId = ((await rocket.json()) as { id: number }).id;
+  const created = await request.post(`${process.env["E2E_BACK_URL"]}/api/launches`, {
+    headers,
+    data: {
+      rocketId,
+      scheduledAt: new Date(Date.now() + 172_800_000).toISOString(),
+      pricePerPassenger: 1500,
+    },
+  });
+  expect(created.status()).toBe(201);
+  const id = ((await created.json()) as { id: number }).id;
+  return { headers, id, name };
+};
+
+test.describe("Cancel launch pages", () => {
+  test("AC-CNL-09 cancels from the detail and shows the cause, time and user", async ({
+    page,
+    request,
+  }) => {
+    await registerAndLogin(page, request, "cancel");
+    const { id } = await planFromApi(page, request, "cancel-rocket");
+    await page.goto(`/launches/${id}`);
+    await expect(page.locator("#cancel-form")).toBeVisible();
+    await page.locator("#cancel-cause-type").selectOption("technical");
+    await page.locator("#cancel-cause-text").fill("Valve leak");
+    await page.getByRole("button", { name: "Cancel launch" }).click();
+
+    await expect(page.locator("#launch-status")).toHaveText("Cancelled");
+    await expect(page.locator("#launch-cause-type")).toHaveText("Técnico");
+    await expect(page.locator("#launch-cause-text")).toHaveText("Valve leak");
+    await expect(page.locator("#launch-cancelled-at")).not.toBeEmpty();
+    await expect(page.locator("#launch-cancelled-by")).toHaveText(authFixture.users.ada.name);
+    await expect(page.locator("#cancel-form")).toHaveCount(0);
+  });
+
+  test("AC-CNL-10 shows a cancelled launch without the form", async ({ page, request }) => {
+    await registerAndLogin(page, request, "closed");
+    const { id, headers } = await planFromApi(page, request, "closed-rocket");
+    const cancelled = await request.post(
+      `${process.env["E2E_BACK_URL"]}/api/launches/${id}/cancel`,
+      {
+        headers,
+        data: { causeType: "economic", causeText: "Budget cut" },
+      },
+    );
+    expect(cancelled.status()).toBe(200);
+
+    await page.goto(`/launches/${id}`);
+    await expect(page.locator("#launch-cause-type")).toHaveText("Económico");
+    await expect(page.locator("#launch-cause-text")).toHaveText("Budget cut");
+    await expect(page.locator("#launch-cancelled-by")).toHaveText(authFixture.users.ada.name);
+    await expect(page.locator("#cancel-form")).toHaveCount(0);
+  });
+
+  test("AC-CNL-11 hides the form when the launch is successful", async ({ page, request }) => {
+    await registerAndLogin(page, request, "done");
+    const { id } = await planFromApi(page, request, "done-rocket");
+    setLaunchStatus(id, "successful");
+
+    await page.goto(`/launches/${id}`);
+    await expect(page.locator("#launch-status")).toHaveText("Successful");
+    await expect(page.locator("#cancel-form")).toHaveCount(0);
+    await expect(page.locator("#launch-cause-type")).toHaveCount(0);
+  });
+
+  test("AC-CNL-12 lists the cancelled status without the cause", async ({ page, request }) => {
+    await registerAndLogin(page, request, "listed-cancel");
+    const cause = `Pad closed ${uniqueName("cause")}`;
+    const { id, name, headers } = await planFromApi(page, request, "listed-rocket");
+    const cancelled = await request.post(
+      `${process.env["E2E_BACK_URL"]}/api/launches/${id}/cancel`,
+      {
+        headers,
+        data: { causeType: "meteorological", causeText: cause },
+      },
+    );
+    expect(cancelled.status()).toBe(200);
+
+    await page.goto("/launches");
+    const item = page.getByRole("listitem").filter({ hasText: name });
+    await expect(item).toContainText("Cancelled");
+    await expect(item).not.toContainText(cause);
+    await expect(item).not.toContainText(authFixture.users.ada.name);
   });
 });

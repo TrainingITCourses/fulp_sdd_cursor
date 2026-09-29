@@ -1,6 +1,7 @@
 import { type APIRequestContext, expect, test } from "@playwright/test";
 import authFixture from "./fixtures/auth.json" with { type: "json" };
 import { uniqueEmail } from "./fixtures/test-data.js";
+import { setLaunchStatus } from "./support/set-launch-status.js";
 
 const BACK_URL = process.env["E2E_BACK_URL"];
 
@@ -10,12 +11,20 @@ interface Rocket {
   disabled: boolean;
 }
 
+interface Cancellation {
+  causeType: string;
+  causeText: string;
+  cancelledAt: string;
+  cancelledBy: { id: number; name: string };
+}
+
 interface Launch {
   id: number;
   rocketId: number;
   scheduledAt: string;
   pricePerPassenger: number;
   status: string;
+  cancellation: Cancellation | null;
 }
 
 const uniqueName = (label: string): string =>
@@ -136,5 +145,143 @@ test.describe("Launches API", () => {
     expect(list.status()).toBe(401);
     expect(created.status()).toBe(401);
     expect(detail.status()).toBe(401);
+  });
+});
+
+const planLaunch = async (
+  request: APIRequestContext,
+  headers: { Authorization: string },
+): Promise<Launch> => {
+  const rocket = await createRocket(request, headers, "cancel");
+  const created = await request.post(`${BACK_URL}/api/launches`, {
+    data: { rocketId: rocket.id, scheduledAt: futureIso(), pricePerPassenger: 2100 },
+    headers,
+  });
+  expect(created.status()).toBe(201);
+  return (await created.json()) as Launch;
+};
+
+test.describe("Cancel launch API", () => {
+  test("AC-CNL-01 and AC-CNL-07 cancel a planned or confirmed launch and return the record", async ({
+    request,
+  }) => {
+    const token = await sessionToken(request);
+    const headers = authHeaders(token);
+    const planned = await planLaunch(request, headers);
+    const confirmed = await planLaunch(request, headers);
+    setLaunchStatus(confirmed.id, "confirmed");
+
+    const first = await request.post(`${BACK_URL}/api/launches/${planned.id}/cancel`, {
+      data: { causeType: "technical", causeText: "  Valve leak  " },
+      headers,
+    });
+    expect(first.status()).toBe(200);
+    const cancelled = (await first.json()) as Launch;
+    expect(cancelled.status).toBe("cancelled");
+    expect(cancelled.cancellation?.causeType).toBe("technical");
+    expect(cancelled.cancellation?.causeText).toBe("Valve leak");
+    expect(cancelled.cancellation?.cancelledAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(cancelled.cancellation?.cancelledBy.name).toBe(authFixture.users.ada.name);
+
+    const second = await request.post(`${BACK_URL}/api/launches/${confirmed.id}/cancel`, {
+      data: { causeType: "economic", causeText: "Budget cut" },
+      headers,
+    });
+    expect(second.status()).toBe(200);
+    const also = (await second.json()) as Launch;
+    expect(also.cancellation?.causeType).toBe("economic");
+
+    const found = await request.get(`${BACK_URL}/api/launches/${planned.id}`, { headers });
+    expect(found.status()).toBe(200);
+    expect((await found.json()) as Launch).toMatchObject({
+      cancellation: cancelled.cancellation,
+      status: "cancelled",
+    });
+  });
+
+  test("AC-CNL-02 and AC-CNL-03 reject a bad cause or an actor field with 400", async ({
+    request,
+  }) => {
+    const token = await sessionToken(request);
+    const headers = authHeaders(token);
+    const launch = await planLaunch(request, headers);
+    const badType = await request.post(`${BACK_URL}/api/launches/${launch.id}/cancel`, {
+      data: { causeType: "weather", causeText: "Storm" },
+      headers,
+    });
+    const blank = await request.post(`${BACK_URL}/api/launches/${launch.id}/cancel`, {
+      data: { causeType: "meteorological", causeText: "   " },
+      headers,
+    });
+    const actor = await request.post(`${BACK_URL}/api/launches/${launch.id}/cancel`, {
+      data: {
+        causeType: "meteorological",
+        causeText: "Storm",
+        cancelledAt: "2026-09-29T16:00:00.000Z",
+      },
+      headers,
+    });
+    expect(badType.status()).toBe(400);
+    expect(blank.status()).toBe(400);
+    expect(actor.status()).toBe(400);
+    const still = await request.get(`${BACK_URL}/api/launches/${launch.id}`, { headers });
+    const body = (await still.json()) as Launch;
+    expect(body.status).toBe("planned");
+    expect(body.cancellation).toBeNull();
+  });
+
+  test("AC-CNL-04 and AC-CNL-14 reject a successful or already cancelled launch with 409", async ({
+    request,
+  }) => {
+    const token = await sessionToken(request);
+    const headers = authHeaders(token);
+    const successful = await planLaunch(request, headers);
+    setLaunchStatus(successful.id, "successful");
+    const blocked = await request.post(`${BACK_URL}/api/launches/${successful.id}/cancel`, {
+      data: { causeType: "technical", causeText: "Too late" },
+      headers,
+    });
+    expect(blocked.status()).toBe(409);
+
+    const launch = await planLaunch(request, headers);
+    const first = await request.post(`${BACK_URL}/api/launches/${launch.id}/cancel`, {
+      data: { causeType: "meteorological", causeText: "Storm" },
+      headers,
+    });
+    expect(first.status()).toBe(200);
+    const recorded = ((await first.json()) as Launch).cancellation;
+    const again = await request.post(`${BACK_URL}/api/launches/${launch.id}/cancel`, {
+      data: { causeType: "economic", causeText: "Changed" },
+      headers,
+    });
+    expect(again.status()).toBe(409);
+    const found = await request.get(`${BACK_URL}/api/launches/${launch.id}`, { headers });
+    expect(((await found.json()) as Launch).cancellation).toEqual(recorded);
+  });
+
+  test("AC-CNL-05 responds 404 for an unknown launch", async ({ request }) => {
+    const token = await sessionToken(request);
+    const missing = await request.post(`${BACK_URL}/api/launches/999999/cancel`, {
+      data: { causeType: "technical", causeText: "Gone" },
+      headers: authHeaders(token),
+    });
+    expect(missing.status()).toBe(404);
+  });
+
+  test("AC-CNL-06 rejects a cancel without a session with 401", async ({ request }) => {
+    const cancelled = await request.post(`${BACK_URL}/api/launches/1/cancel`, {
+      data: { causeType: "technical", causeText: "Gone" },
+    });
+    expect(cancelled.status()).toBe(401);
+  });
+
+  test("AC-CNL-08 returns an empty cancellation while the launch is not cancelled", async ({
+    request,
+  }) => {
+    const token = await sessionToken(request);
+    const headers = authHeaders(token);
+    const launch = await planLaunch(request, headers);
+    const found = await request.get(`${BACK_URL}/api/launches/${launch.id}`, { headers });
+    expect(((await found.json()) as Launch).cancellation).toBeNull();
   });
 });
